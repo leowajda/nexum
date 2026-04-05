@@ -2,33 +2,29 @@
 
 ## Architecture
 
-Nexum builds the website in two stages.
+```mermaid
+architecture-beta
+  group authoring(cloud)[Authoring Inputs]
+  service content(disk)[Theme, site content, manifests] in authoring
+  service sourceRepos(internet)[Source repos] in authoring
+  service browserUi(server)[packages/ui/src] in authoring
 
-1. The Effect CLI reads source repositories, copies the shared theme and site content, generates project-specific data and pages, builds the browser bundles, and writes the final Jekyll input into `site/`.
-2. Jekyll renders `site/` into `_site/`, which is what GitHub Pages deploys.
+  group build(server)[Effect CLI Pipeline]
+  service cli(server)[tools/src/main.ts] in build
+  service generate(server)[tools/src/programs/generate.ts] in build
+  service assets(server)[tools/src/core/assets.ts] in build
 
-Main directories:
+  group publish(cloud)[Published Site]
+  service siteDir(disk)[site/] in publish
+  service jekyllBuild(server)[bundle exec jekyll build] in publish
+  service pages(cloud)[_site / GitHub Pages] in publish
 
-- `packages/theme/src`: shared Jekyll layouts, includes, and styles.
-- `packages/ui/src`: shared browser code written in TypeScript with Effect.
-- `site-src/`: root pages, posts, and site-specific Jekyll source files.
-- `tools/src`: Effect CLI and generation logic.
-- `projects/`: project manifests that describe what Nexum should ingest.
-- `sources/`: git submodules for project source repositories.
-- `site/`: generated Jekyll source, rebuilt on every generation step.
-- `_site/`: final rendered static site output.
-
-## Local development
-
-```bash
-pnpm install
-bundle config set --local path vendor/bundle
-bundle install
-git submodule update --init --recursive
-pnpm run serve
+  content:R --> L:generate
+  sourceRepos:R --> L:generate
+  cli:B --> T:generate
+  browserUi:R --> L:assets
+  generate:B --> T:siteDir
+  assets:B --> T:siteDir
+  siteDir:B --> T:jekyllBuild
+  jekyllBuild:B --> T:pages
 ```
-
-## Build flow
-
-1. `pnpm generate` composes theme files, site content, generated project data, browser bundles, and vendored assets into `site/`.
-2. Jekyll builds `site/` into `_site/`.
