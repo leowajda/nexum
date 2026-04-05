@@ -93,6 +93,17 @@
   gap: 0.5rem;
 }
 
+.highlight,
+.highlighter-rouge {
+  margin: 1rem 0;
+}
+
+.highlight {
+  position: relative;
+  border: 1px solid currentColor;
+  background: #f8f8f8;
+}
+
 .code-copy-button {
   position: absolute;
   top: 0.75rem;
@@ -104,9 +115,84 @@
   position: relative;
 }
 
-.code-enhanced .highlight,
+.highlight pre,
 .code-enhanced pre {
   margin: 0;
+}
+
+.highlight pre {
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.highlight code {
+  background: transparent;
+  color: inherit;
+}
+
+.highlight .c,
+.highlight .c1,
+.highlight .cm,
+.highlight .cp {
+  color: #6a737d;
+}
+
+.highlight .k,
+.highlight .kd,
+.highlight .kn,
+.highlight .kp,
+.highlight .kr {
+  color: #d73a49;
+}
+
+.highlight .kt,
+.highlight .nc,
+.highlight .nd {
+  color: #6f42c1;
+}
+
+.highlight .nf,
+.highlight .fm {
+  color: #005cc5;
+}
+
+.highlight .s,
+.highlight .sa,
+.highlight .sb,
+.highlight .sc,
+.highlight .dl,
+.highlight .sd,
+.highlight .s2,
+.highlight .sh,
+.highlight .si,
+.highlight .sr,
+.highlight .ss {
+  color: #032f62;
+}
+
+.highlight .m,
+.highlight .mb,
+.highlight .mf,
+.highlight .mh,
+.highlight .mi,
+.highlight .il {
+  color: #005cc5;
+}
+
+.highlight .o,
+.highlight .ow {
+  color: #d73a49;
+}
+
+.highlight .p {
+  color: inherit;
+}
+
+.highlight .na,
+.highlight .nb,
+.highlight .bp,
+.highlight .nv {
+  color: #24292e;
 }
 
 .math-block {

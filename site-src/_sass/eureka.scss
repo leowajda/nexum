@@ -245,6 +245,12 @@
   gap: 0.5rem;
 }
 
+.badge-list--single-line,
+.problem-meta--single-line {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
 .badge-list .badge {
   font-size: 0.9rem;
 }
@@ -265,16 +271,20 @@
   gap: 1rem;
 }
 
+.problem-embed--centered {
+  max-width: 980px;
+  margin: 0 auto;
+}
+
 .problem-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-.problem-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+.problem-viewer {
+  display: grid;
+  gap: 1rem;
 }
 
 .language-switcher,
@@ -297,8 +307,34 @@
 .code-shell__panel {
   display: grid;
   gap: 0.85rem;
+}
+
+.code-shell {
+  display: grid;
+  gap: 0.85rem;
   border: 1px solid currentColor;
   background: white;
+}
+
+.code-shell__header {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  border-bottom: 1px solid currentColor;
+}
+
+.code-shell__header-copy {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.code-shell__header-copy h3 {
+  margin: 0;
+}
+
+.code-shell__header-copy p {
+  margin: 0;
+  opacity: 0.75;
 }
 
 .code-shell__bar {

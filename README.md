@@ -1,14 +1,22 @@
 # Nexum
 
-Single-source Jekyll website for `leowajda.github.io`.
-
 ## Architecture
 
-- `packages/theme/src`: shared Jekyll theme source copied from `no-style-please` and evolved here.
-- `packages/ui/src`: shared browser modules written in TypeScript with Effect.
-- `site-src/`: content and site-specific overrides.
-- `tools/src`: Effect CLI for generating the buildable Jekyll source under `site/`.
-- `sources/`: git submodules for project content.
+Nexum builds the website in two stages.
+
+1. The Effect CLI reads source repositories, copies the shared theme and site content, generates project-specific data and pages, builds the browser bundles, and writes the final Jekyll input into `site/`.
+2. Jekyll renders `site/` into `_site/`, which is what GitHub Pages deploys.
+
+Main directories:
+
+- `packages/theme/src`: shared Jekyll layouts, includes, and styles.
+- `packages/ui/src`: shared browser code written in TypeScript with Effect.
+- `site-src/`: root pages, posts, and site-specific Jekyll source files.
+- `tools/src`: Effect CLI and generation logic.
+- `projects/`: project manifests that describe what Nexum should ingest.
+- `sources/`: git submodules for project source repositories.
+- `site/`: generated Jekyll source, rebuilt on every generation step.
+- `_site/`: final rendered static site output.
 
 ## Local development
 

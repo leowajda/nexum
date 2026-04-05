@@ -1,0 +1,64 @@
+{%- assign problem = include.problem -%}
+{%- assign embed = include.embed | default: false -%}
+{%- assign first_language = problem.languages.first.slug -%}
+
+<section class="problem-viewer" data-problem-shell>
+  <div class="control-group viewer-control-group">
+    <div class="control-group__head">
+      <h2>Languages</h2>
+      <p>{% if embed %}Choose which language to preview in RemNote.{% else %}Choose which language to view.{% endif %}</p>
+    </div>
+    <div class="language-switcher" data-language-switcher data-default-language="{{ first_language }}">
+      {%- for language in problem.languages -%}
+        <button class="language-tab{% if forloop.first %} is-active{% endif %}" type="button" data-language-target="{{ language.slug }}">{{ language.label }}</button>
+      {%- endfor -%}
+    </div>
+  </div>
+
+  <div class="language-panels">
+    {%- for language in problem.languages -%}
+      {%- assign language_impls = problem.implementations | where: "language", language.slug -%}
+      <section class="language-panel" data-language-panel data-language="{{ language.slug }}" data-default-implementation="{{ language_impls.first.id }}"{% unless forloop.first %} hidden{% endunless %}>
+        <section class="code-shell">
+          <div class="code-shell__header">
+            <div class="code-shell__header-copy">
+              <h3>{{ problem.name }}</h3>
+              <p>{{ language.label }} implementations</p>
+            </div>
+            <div class="approach-switcher" data-implementation-switcher>
+              {%- for implementation in language_impls -%}
+                <button class="approach-tab{% if forloop.first %} is-active{% endif %}" type="button" data-implementation-target="{{ implementation.id }}">{{ implementation.approach }} solution</button>
+              {%- endfor -%}
+            </div>
+          </div>
+
+          {%- for implementation in language_impls -%}
+            <section class="code-shell__panel" data-implementation-panel id="{{ implementation.id }}"{% unless forloop.first %} hidden{% endunless %}>
+              <div class="code-shell__bar">
+                <div class="code-shell__title">
+                  <strong>{{ language.label }}</strong>
+                  <span>{{ implementation.approach }} solution</span>
+                </div>
+                <div class="code-shell__actions">
+                  {%- if embed -%}
+                    <a class="link-button" href="{{ problem.detail_url | relative_url }}?language={{ language.slug }}&implementation={{ implementation.id }}">Open page</a>
+                  {%- else -%}
+                    <a class="link-button" href="{{ problem.embed_url | relative_url }}?language={{ language.slug }}&implementation={{ implementation.id }}">Open embed</a>
+                  {%- endif -%}
+                  <a class="link-button" href="{{ implementation.source_url }}" target="_blank" rel="noreferrer">Source code</a>
+                  <a class="link-button" href="{{ problem.url }}" target="_blank" rel="noreferrer">LeetCode</a>
+                </div>
+              </div>
+              {%- capture code_block -%}
+```{{ implementation.code_language }}
+{{ implementation.code }}
+```
+              {%- endcapture -%}
+              <div class="code-markdown">{{ code_block | markdownify }}</div>
+            </section>
+          {%- endfor -%}
+        </section>
+      </section>
+    {%- endfor -%}
+  </div>
+</section>
