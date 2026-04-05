@@ -1,30 +1,37 @@
-# Nexum
-
-## Architecture
-
 ```mermaid
-architecture-beta
-  group authoring(cloud)[Authoring Inputs]
-  service content(disk)[Theme, site content, manifests] in authoring
-  service sourceRepos(internet)[Source repos] in authoring
-  service browserUi(server)[packages/ui/src] in authoring
+%%{init: {"theme": "default", "flowchart": {"curve": "basis"}}}%%
+flowchart LR
+  subgraph Inputs["Inputs"]
+    direction TB
+    theme["Theme + site content"]
+    manifests["Project manifests"]
+    sources["Source repos"]
+    ui["Browser UI"]
+  end
 
-  group build(server)[Effect CLI Pipeline]
-  service cli(server)[tools/src/main.ts] in build
-  service generate(server)[tools/src/programs/generate.ts] in build
-  service assets(server)[tools/src/core/assets.ts] in build
+  subgraph Build["Build"]
+    direction TB
+    generate["pnpm generate"]
+    jekyll["bundle exec jekyll build"]
+  end
 
-  group publish(cloud)[Published Site]
-  service siteDir(disk)[site/] in publish
-  service jekyllBuild(server)[bundle exec jekyll build] in publish
-  service pages(cloud)[_site / GitHub Pages] in publish
+  subgraph Output["Output"]
+    direction TB
+    site["site/"]
+    pages["_site / GitHub Pages"]
+  end
 
-  content:R --> L:generate
-  sourceRepos:R --> L:generate
-  cli:B --> T:generate
-  browserUi:R --> L:assets
-  generate:B --> T:siteDir
-  assets:B --> T:siteDir
-  siteDir:B --> T:jekyllBuild
-  jekyllBuild:B --> T:pages
+  theme --> generate
+  manifests --> generate
+  sources --> generate
+  ui --> generate
+  generate --> site --> jekyll --> pages
+
+  classDef input fill:#eef2ff,stroke:#6366f1,color:#111827;
+  classDef process fill:#fff7ed,stroke:#f59e0b,color:#111827;
+  classDef output fill:#ecfdf5,stroke:#10b981,color:#111827;
+
+  class theme,manifests,sources,ui input;
+  class generate,jekyll process;
+  class site,pages output;
 ```
