@@ -1,0 +1,12 @@
+node_modules/
+.pnpm-store/
+dist/
+.turbo/
+
+vendor/bundle/
+.bundle/
+
+site/
+_site/
+
+.DS_Store
