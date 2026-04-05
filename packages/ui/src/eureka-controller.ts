@@ -1,6 +1,9 @@
-import { Effect } from "effect"
+export const initializeEurekaUi = () => {
+  initializeProblemTable()
+  initializeProblemShells()
+}
 
-const initializeProblemTable = Effect.sync(() => {
+const initializeProblemTable = () => {
   const table = document.getElementById("problem-table")
   if (!table) {
     return
@@ -127,9 +130,9 @@ const initializeProblemTable = Effect.sync(() => {
         }
 
         syncCategoryButtons()
-      } else if (kind) {
-        state[kind as "difficulty" | "language"] = state[kind as "difficulty" | "language"] === value ? "" : value
-        syncSingleSelectButtons(kind, state[kind as "difficulty" | "language"])
+      } else if (kind === "difficulty" || kind === "language") {
+        state[kind] = state[kind] === value ? "" : value
+        syncSingleSelectButtons(kind, state[kind])
       }
 
       render()
@@ -138,9 +141,9 @@ const initializeProblemTable = Effect.sync(() => {
 
   activateDefaults()
   render()
-})
+}
 
-const getDefaultImplementation = (languagePanels: Array<HTMLElement>, language: string): string => {
+const getDefaultImplementation = (languagePanels: Array<HTMLElement>, language: string) => {
   const panel = languagePanels.find((item) => item.dataset.language === language)
   if (!panel) {
     return ""
@@ -150,7 +153,7 @@ const getDefaultImplementation = (languagePanels: Array<HTMLElement>, language: 
   return firstImplementation ? firstImplementation.id : ""
 }
 
-const initializeProblemShells = Effect.sync(() => {
+const initializeProblemShells = () => {
   document.querySelectorAll<HTMLElement>("[data-problem-shell]").forEach((shell) => {
     const languageButtons = Array.from(shell.querySelectorAll<HTMLButtonElement>("[data-language-target]"))
     const languagePanels = Array.from(shell.querySelectorAll<HTMLElement>("[data-language-panel]"))
@@ -174,7 +177,9 @@ const initializeProblemShells = Effect.sync(() => {
     const requestedLanguage = params.get("language") || ""
     const initial = implementationMap.get(requestedImplementation)
     const initialLanguage = initial?.language
-      || (requestedLanguage && languagePanels.some((panel) => panel.dataset.language === requestedLanguage) ? requestedLanguage : (languagePanels[0].dataset.language || ""))
+      || (requestedLanguage && languagePanels.some((panel) => panel.dataset.language === requestedLanguage)
+        ? requestedLanguage
+        : (languagePanels[0].dataset.language || ""))
     const initialImplementation = initial?.implementationId || getDefaultImplementation(languagePanels, initialLanguage)
 
     const activateImplementation = (panel: HTMLElement, implementationId: string) => {
@@ -238,9 +243,4 @@ const initializeProblemShells = Effect.sync(() => {
       })
     })
   })
-})
-
-void Effect.runPromise(Effect.gen(function* () {
-  yield* initializeProblemTable
-  yield* initializeProblemShells
-}))
+}

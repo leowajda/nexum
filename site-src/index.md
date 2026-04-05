@@ -6,10 +6,6 @@ description: Hello world.
 
 Hello world.
 
-<p>
-  <a class="link-button" href="{{ '/eureka/' | relative_url }}">View Eureka</a>
-</p>
-
 ## Projects
 
 <div class="card-grid">

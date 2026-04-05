@@ -1,5 +1,6 @@
 import renderMathInElement from "katex/contrib/auto-render"
 import { Effect } from "effect"
+import { initializeEurekaUi } from "./eureka-controller"
 
 const themeStorageKey = "nexum-theme"
 
@@ -18,7 +19,11 @@ const resolveTheme = Effect.sync(() => {
     return attribute
   }
 
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+  if (typeof window.matchMedia === "function") {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+  }
+
+  return "light"
 })
 
 const applyTheme = (theme: string) => Effect.sync(() => {
@@ -34,25 +39,16 @@ const updateThemeButton = (button: HTMLButtonElement) =>
     })
   )
 
-const waitForDomReady = Effect.async<void, never>((resume) => {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => resume(Effect.void), { once: true })
-    return
-  }
-
-  resume(Effect.void)
-})
-
 const initializeThemeToggle = Effect.sync(() => {
   const button = document.querySelector<HTMLButtonElement>("[data-theme-toggle]")
   if (!button) {
     return
   }
 
-  void Effect.runPromise(updateThemeButton(button))
+  Effect.runSync(updateThemeButton(button))
 
   button.addEventListener("click", () => {
-    void Effect.runPromise(
+    Effect.runSync(
       Effect.gen(function* () {
         const currentTheme = yield* resolveTheme
         const nextTheme = currentTheme === "dark" ? "light" : "dark"
@@ -123,16 +119,36 @@ const initializeMath = Effect.sync(() => {
   })
 })
 
-const program = Effect.gen(function* () {
+const applyStoredTheme = Effect.gen(function* () {
   const storedTheme = yield* getStoredTheme
   if (storedTheme) {
     yield* applyTheme(storedTheme)
   }
-
-  yield* waitForDomReady
-  yield* initializeThemeToggle
-  yield* initializeCopyButtons
-  yield* initializeMath
 })
 
-void Effect.runPromise(program)
+const runSafely = (label: string, effect: Effect.Effect<void, unknown>) => {
+  try {
+    Effect.runSync(effect)
+  } catch (error) {
+    console.error(`Failed to initialize ${label}`, error)
+  }
+}
+
+const start = () => {
+  runSafely("stored theme", applyStoredTheme)
+  runSafely("theme toggle", initializeThemeToggle)
+  runSafely("copy buttons", initializeCopyButtons)
+  runSafely("math rendering", initializeMath)
+
+  try {
+    initializeEurekaUi()
+  } catch (error) {
+    console.error("Failed to initialize Eureka UI", error)
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", start, { once: true })
+} else {
+  start()
+}

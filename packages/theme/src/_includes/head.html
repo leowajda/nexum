@@ -1,3 +1,4 @@
+{%- assign asset_version = site.time | date: '%s' -%}
 <head>
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -8,6 +9,6 @@
   {%- seo title=false -%}
   {%- feed_meta -%}
 
-  <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}" />
-  <link rel="stylesheet" href="{{ '/assets/vendor/katex/katex.min.css' | relative_url }}" />
+  <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}?v={{ asset_version }}" />
+  <link rel="stylesheet" href="{{ '/assets/vendor/katex/katex.min.css' | relative_url }}?v={{ asset_version }}" />
 </head>
