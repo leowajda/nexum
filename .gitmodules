@@ -1,0 +1,3 @@
+[submodule "sources/eureka"]
+	path = sources/eureka
+	url = https://github.com/leowajda/eureka.git
