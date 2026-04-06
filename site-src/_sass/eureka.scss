@@ -161,10 +161,6 @@
   border-bottom: 1px solid currentColor;
 }
 
-.problem-title-cell {
-  position: relative;
-}
-
 .problem-table th:first-child {
   width: 30%;
 }
@@ -213,16 +209,6 @@
 
 .problem-row--hard:hover > td {
   background: #f4dede;
-}
-
-.problem-title-cell .problem-title__action {
-  position: absolute;
-  top: 0.55rem;
-  right: 0.55rem;
-}
-
-.problem-title-cell .problem-title {
-  padding-right: 2.25rem;
 }
 
 .problem-title__link {

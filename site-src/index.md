@@ -8,14 +8,18 @@ description: ""
 
 <div class="card-grid">
   {%- for project in site.data.generated.projects -%}
-    <article class="content-card">
-      <h3><a href="{{ project.url | relative_url }}">{{ project.title }}</a></h3>
-      <p>{{ project.description }}</p>
-      <div class="content-card__meta">
-        <a class="link-button" href="{{ project.url | relative_url }}">Open</a>
-        <a class="link-button" href="{{ project.source_url }}" target="_blank" rel="noreferrer">Source</a>
-      </div>
-    </article>
+      <article class="content-card">
+        <h3><a href="{{ project.url | relative_url }}">{{ project.title }}</a></h3>
+        <p>{{ project.description }}</p>
+        <div class="content-card__meta">
+        <a class="link-button icon-button" href="{{ project.url | relative_url }}" aria-label="Open project" title="Open project">
+          {%- include icon.html name="open-page" -%}
+        </a>
+        <a class="link-button icon-button" href="{{ project.source_url }}" target="_blank" rel="noreferrer" aria-label="Open source on GitHub" title="Open source on GitHub">
+          {%- include icon.html name="github" -%}
+        </a>
+        </div>
+      </article>
   {%- endfor -%}
 </div>
 
