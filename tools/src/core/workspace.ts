@@ -1,4 +1,4 @@
-import { Context, Layer } from "effect"
+import { Context, Effect, Layer } from "effect"
 import {
   copyDirectoryContents,
   fileExists,
@@ -17,6 +17,7 @@ export interface WorkspaceService {
   readonly copyDirectoryContents: typeof copyDirectoryContents
   readonly fileExists: typeof fileExists
   readonly runGit: typeof runGit
+  readonly updateSubmodules: (workingDirectory: string) => Effect.Effect<string, Error>
 }
 
 export class Workspace extends Context.Tag("Workspace")<Workspace, WorkspaceService>() {}
@@ -28,5 +29,9 @@ export const WorkspaceLive = Layer.succeed(Workspace, {
   removeDirectory,
   copyDirectoryContents,
   fileExists,
-  runGit
+  runGit,
+  updateSubmodules: (workingDirectory: string) =>
+    runGit(workingDirectory, "submodule", "sync", "--recursive").pipe(
+      Effect.flatMap(() => runGit(workingDirectory, "submodule", "update", "--init", "--recursive"))
+    )
 })

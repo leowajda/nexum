@@ -27,7 +27,7 @@ const loadProjectManifests = Effect.gen(function* () {
 const program = Effect.gen(function* () {
   const workspace = yield* Workspace
 
-  yield* workspace.runGit(rootDirectory, "submodule", "update", "--init", "--recursive")
+  yield* workspace.updateSubmodules(rootDirectory)
   const manifests = yield* loadProjectManifests
   const { adapters } = yield* ProjectAdapterRegistry
 
