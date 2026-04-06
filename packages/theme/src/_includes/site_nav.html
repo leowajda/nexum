@@ -1,8 +1,18 @@
 <nav class="site-nav" aria-label="Main navigation">
   <div class="site-nav__links">
     {%- for entry in site.data.navigation.entries -%}
-      <a class="site-nav__link" href="{{ entry.url | relative_url }}">{{ entry.title }}</a>
+      <a class="site-nav__link" href="{{ entry.url | relative_url }}">
+        {%- if entry.icon -%}
+          {%- include icon.html name=entry.icon class="site-nav__link-icon" -%}
+        {%- endif -%}
+        <span>{{ entry.title }}</span>
+      </a>
     {%- endfor -%}
+    {%- if page.project_key -%}
+      <a class="site-nav__link icon-button" href="{{ '/' | relative_url }}" aria-label="Back home" title="Back home">
+        {%- include icon.html name="back" class="site-nav__link-icon" -%}
+      </a>
+    {%- endif -%}
   </div>
   <button class="theme-toggle icon-button" type="button" data-theme-toggle aria-label="Switch theme" title="Switch theme">
     {%- include icon.html name="theme-dark" class="theme-toggle__icon" -%}

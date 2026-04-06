@@ -30,14 +30,20 @@
 }
 
 .icon-button {
-  padding: 0.4rem;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  padding: 0.65rem;
   line-height: 0;
+}
+
+.site-nav__link-icon {
+  font-size: 1.05rem;
 }
 
 .icon {
   display: inline-block;
-  width: 1em;
-  height: 1em;
+  width: 1.15em;
+  height: 1.15em;
   flex: 0 0 auto;
   fill: currentColor;
 }
