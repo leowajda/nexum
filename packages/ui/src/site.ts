@@ -1,19 +1,21 @@
 import renderMathInElement from "katex/contrib/auto-render"
-import { Effect } from "effect"
 import { initializeEurekaUi } from "./eureka-controller"
+import { createIcon } from "./icons"
 
-const themeStorageKey = "nexum-theme"
+const themeStorageKey = "leowajda.github.io-theme"
 
-const getStoredTheme = Effect.sync(() => {
+type Theme = "light" | "dark"
+
+const getStoredTheme = (): Theme | null => {
   try {
     const stored = window.localStorage.getItem(themeStorageKey)
     return stored === "light" || stored === "dark" ? stored : null
   } catch {
     return null
   }
-})
+}
 
-const resolveTheme = Effect.sync(() => {
+const resolveTheme = (): Theme => {
   const attribute = document.body.getAttribute("a") || "auto"
   if (attribute === "light" || attribute === "dark") {
     return attribute
@@ -24,49 +26,52 @@ const resolveTheme = Effect.sync(() => {
   }
 
   return "light"
-})
+}
 
-const applyTheme = (theme: string) => Effect.sync(() => {
+const applyTheme = (theme: Theme) => {
   document.body.setAttribute("a", theme)
-})
+}
 
-const updateThemeButton = (button: HTMLButtonElement) =>
-  Effect.flatMap(resolveTheme, (currentTheme) =>
-    Effect.sync(() => {
-      const nextTheme = currentTheme === "dark" ? "Light" : "Dark"
-      button.textContent = `${nextTheme} mode`
-      button.setAttribute("aria-label", `Switch to ${nextTheme.toLowerCase()} mode`)
-    })
-  )
+const updateThemeButton = (button: HTMLButtonElement) => {
+  const currentTheme = resolveTheme()
+  const nextTheme: Theme = currentTheme === "dark" ? "light" : "dark"
+  const label = button.querySelector<HTMLElement>("[data-theme-label]")
+  const icon = button.querySelector<SVGUseElement>(".theme-toggle__icon use")
 
-const initializeThemeToggle = Effect.sync(() => {
+  if (label) {
+    label.textContent = `${nextTheme === "dark" ? "Dark" : "Light"} mode`
+  }
+
+  if (icon) {
+    icon.setAttribute("href", `#icon-theme-${nextTheme}`)
+  }
+
+  button.setAttribute("aria-label", `Switch to ${nextTheme} mode`)
+}
+
+const initializeThemeToggle = () => {
   const button = document.querySelector<HTMLButtonElement>("[data-theme-toggle]")
   if (!button) {
     return
   }
 
-  Effect.runSync(updateThemeButton(button))
+  updateThemeButton(button)
 
   button.addEventListener("click", () => {
-    Effect.runSync(
-      Effect.gen(function* () {
-        const currentTheme = yield* resolveTheme
-        const nextTheme = currentTheme === "dark" ? "light" : "dark"
-        yield* applyTheme(nextTheme)
-        yield* Effect.sync(() => {
-          try {
-            window.localStorage.setItem(themeStorageKey, nextTheme)
-          } catch {
-            // Ignore localStorage failures.
-          }
-        })
-        yield* updateThemeButton(button)
-      })
-    )
-  })
-})
+    const nextTheme = resolveTheme() === "dark" ? "light" : "dark"
+    applyTheme(nextTheme)
 
-const initializeCopyButtons = Effect.sync(() => {
+    try {
+      window.localStorage.setItem(themeStorageKey, nextTheme)
+    } catch {
+      // Ignore localStorage failures.
+    }
+
+    updateThemeButton(button)
+  })
+}
+
+const initializeCopyButtons = () => {
   const highlights = document.querySelectorAll<HTMLElement>(".highlight")
   highlights.forEach((highlight) => {
     if (highlight.dataset.codeEnhanced === "true") {
@@ -85,28 +90,33 @@ const initializeCopyButtons = Effect.sync(() => {
     const button = document.createElement("button")
     button.type = "button"
     button.className = "link-button code-copy-button"
-    button.textContent = "Copy"
+
+    const label = document.createElement("span")
+    label.textContent = "Copy"
+
+    button.append(createIcon("copy"), label)
+    button.setAttribute("aria-label", "Copy code")
     button.addEventListener("click", () => {
       void navigator.clipboard.writeText(code.innerText)
         .then(() => {
-          button.textContent = "Copied"
+          label.textContent = "Copied"
           window.setTimeout(() => {
-            button.textContent = "Copy"
+            label.textContent = "Copy"
           }, 1200)
         })
         .catch(() => {
-          button.textContent = "Failed"
+          label.textContent = "Failed"
           window.setTimeout(() => {
-            button.textContent = "Copy"
+            label.textContent = "Copy"
           }, 1200)
         })
     })
 
     highlight.prepend(button)
   })
-})
+}
 
-const initializeMath = Effect.sync(() => {
+const initializeMath = () => {
   renderMathInElement(document.body, {
     delimiters: [
       { left: "$$", right: "$$", display: true },
@@ -117,25 +127,22 @@ const initializeMath = Effect.sync(() => {
     throwOnError: false,
     ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"]
   })
-})
+}
 
-const applyStoredTheme = Effect.gen(function* () {
-  const storedTheme = yield* getStoredTheme
-  if (storedTheme) {
-    yield* applyTheme(storedTheme)
-  }
-})
-
-const runSafely = (label: string, effect: Effect.Effect<void, unknown>) => {
+const runSafely = (label: string, effect: () => void) => {
   try {
-    Effect.runSync(effect)
+    effect()
   } catch (error) {
     console.error(`Failed to initialize ${label}`, error)
   }
 }
 
 const start = () => {
-  runSafely("stored theme", applyStoredTheme)
+  const storedTheme = getStoredTheme()
+  if (storedTheme) {
+    applyTheme(storedTheme)
+  }
+
   runSafely("theme toggle", initializeThemeToggle)
   runSafely("copy buttons", initializeCopyButtons)
   runSafely("math rendering", initializeMath)

@@ -4,5 +4,8 @@
       <a class="site-nav__link" href="{{ entry.url | relative_url }}">{{ entry.title }}</a>
     {%- endfor -%}
   </div>
-  <button class="theme-toggle" type="button" data-theme-toggle>Dark mode</button>
+  <button class="theme-toggle" type="button" data-theme-toggle>
+    {%- include icon.html name="theme-dark" class="theme-toggle__icon" -%}
+    <span class="theme-toggle__label" data-theme-label>Dark mode</span>
+  </button>
 </nav>

@@ -13,6 +13,7 @@ layout: default
 {%- endif -%}
 
 <header class="problems-header">
+  {%- include back_link.html -%}
   <h1>{{ page.title }}</h1>
   <p>{{ page.description }}</p>
   {%- if active_language -%}
@@ -26,10 +27,10 @@ layout: default
       <h2>Search</h2>
     </div>
     <div class="filter-row filter-row--search">
-      <input id="problem-search" type="search" placeholder="Search problem names only" autocomplete="off" data-search-input>
+      <input id="problem-search" type="search" placeholder="Search problem titles only" autocomplete="off" data-search-input>
       <button class="filter-button" type="button" data-filter-kind="clear">Reset</button>
     </div>
-    <p class="filter-help">Search matches problem names only. Use the other filters for difficulty, language, and category.</p>
+    <p class="filter-help">Search matches problem titles only. Use the other filters for difficulty, language, and category.</p>
   </div>
 
   <div class="filter-group">
@@ -76,13 +77,16 @@ layout: default
 </section>
 
 {%- assign language_columns = project.problem_filters.languages -%}
+{%- assign visible_language_columns = language_columns.size -%}
+{%- if page.language_filter -%}
+  {%- assign visible_language_columns = 1 -%}
+{%- endif -%}
 
 <div class="table-wrap">
-  <table class="problem-table" id="problem-table" data-language-filter="{{ page.language_filter | default: '' }}">
+  <table class="problem-table" id="problem-table" data-language-filter="{{ page.language_filter | default: '' }}" style="--language-columns: {{ visible_language_columns }};">
     <thead>
       <tr>
         <th>Problem</th>
-        <th>Difficulty</th>
         <th>Categories</th>
         {%- for language in language_columns -%}
           {%- if page.language_filter and language.slug != page.language_filter -%}
@@ -90,7 +94,6 @@ layout: default
           {%- endif -%}
           <th>{{ language.label }}</th>
         {%- endfor -%}
-        <th>Details</th>
       </tr>
     </thead>
     <tbody>
@@ -111,20 +114,25 @@ layout: default
 
         {%- assign problem_page = project.problem_pages[problem.slug] -%}
         <tr
-          class="problem-row"
+          class="problem-row problem-row--{{ problem.difficulty_slug }}"
           data-problem-row
           data-problem-slug="{{ problem.slug }}"
-          data-search-name="{{ problem.search_name }}"
+          data-search-title="{{ problem.search_title | escape }}"
           data-difficulty="{{ problem.difficulty }}"
           data-categories="{{ problem.categories | join: '|' }}"
           data-languages="{{ problem.languages | map: 'slug' | join: '|' }}"
         >
           <td>
-            <a class="problem-title__link" href="{{ problem.detail_url | relative_url }}">{{ problem.name }}</a>
-            <div class="problem-title__slug">{{ problem.slug }}</div>
-          </td>
-          <td>
-            <span class="badge badge--{{ problem.difficulty_slug }}">{{ problem.difficulty }}</span>
+            <div class="problem-title">
+              <a class="problem-title__link" href="{{ problem.detail_url | relative_url }}">{{ problem.name }}</a>
+              <div class="problem-title__slug">{{ problem.slug }}</div>
+              <div class="problem-title__actions">
+                <a class="link-button problem-title__action" href="{{ problem.detail_url | relative_url }}" target="_blank" rel="noreferrer">
+                  {%- include icon.html name="open-page" class="problem-title__action-icon" -%}
+                  <span>Open page</span>
+                </a>
+              </div>
+            </div>
           </td>
           <td>
             <div class="badge-list">
@@ -150,9 +158,6 @@ layout: default
               </div>
             </td>
           {%- endfor -%}
-          <td>
-            <a class="link-button" href="{{ problem.detail_url | relative_url }}" target="_blank" rel="noreferrer">Open page</a>
-          </td>
         </tr>
       {%- endfor -%}
     </tbody>

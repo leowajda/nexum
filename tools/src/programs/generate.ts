@@ -2,8 +2,8 @@ import { Effect, Layer, Schema } from "effect"
 import path from "node:path"
 import yaml from "yaml"
 import { buildBrowserAssets } from "../core/assets.js"
-import { copyDirectoryContents, readDirectory, readText, removeDirectory, writeText } from "../core/io.js"
-import { generatedSiteDirectory, projectsDirectory, siteSourceDirectory, themeSourceDirectory } from "../core/paths.js"
+import { copyDirectoryContents, readDirectory, readText, removeDirectory, runGit, writeText } from "../core/io.js"
+import { generatedSiteDirectory, projectsDirectory, rootDirectory, siteSourceDirectory, themeSourceDirectory } from "../core/paths.js"
 import { ProjectAdapterRegistry, ProjectAdapterRegistryLive } from "../projects/registry.js"
 import { ProjectManifestSchema } from "../projects/schema.js"
 
@@ -24,6 +24,7 @@ const loadProjectManifests = Effect.gen(function* () {
 })
 
 const program = Effect.gen(function* () {
+  yield* runGit(rootDirectory, "submodule", "update", "--init", "--recursive")
   const manifests = yield* loadProjectManifests
   const { adapters } = yield* ProjectAdapterRegistry
 
@@ -31,16 +32,12 @@ const program = Effect.gen(function* () {
   yield* copyDirectoryContents(themeSourceDirectory, generatedSiteDirectory)
   yield* copyDirectoryContents(siteSourceDirectory, generatedSiteDirectory)
 
-  const projectCards = [] as Array<Record<string, string>>
-
-  for (const manifest of manifests) {
+  const projectCards = yield* Effect.forEach(manifests, (manifest) => {
     const adapter = adapters[manifest.kind]
-    if (!adapter) {
-      return yield* Effect.fail(new Error(`No project adapter registered for kind '${manifest.kind}'`))
-    }
-
-    projectCards.push(yield* adapter.build(manifest))
-  }
+    return adapter
+      ? adapter.build(manifest)
+      : Effect.fail(new Error(`No project adapter registered for kind '${manifest.kind}'`))
+  })
 
   yield* writeText(path.join(generatedSiteDirectory, "_data/generated/projects.yml"), yaml.stringify(projectCards))
   yield* buildBrowserAssets

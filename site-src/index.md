@@ -1,10 +1,8 @@
 ---
 layout: home
 title: Leonardo Wajda
-description: Hello world.
+description: ""
 ---
-
-Hello world.
 
 ## Projects
 

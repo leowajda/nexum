@@ -1,1 +1,4 @@
-<a href="{{ '/' | relative_url }}">{{ site.theme_config.back_home_text }}</a>
+<a class="link-button back-link" href="{{ '/' | relative_url }}">
+  {%- include icon.html name="back" class="back-link__icon" -%}
+  <span>{{ site.theme_config.back_home_text }}</span>
+</a>

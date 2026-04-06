@@ -154,8 +154,8 @@ const buildEureka = (manifest: ProjectManifest) =>
         implementation_count: implementations.length,
         detail_url: `${manifest.route_base}/problems/${slug}/`,
         embed_url: `${manifest.route_base}/problems/${slug}/embed/`,
-        search_name: rawProblem.name.toLowerCase()
-      })
+            search_title: rawProblem.name.toLowerCase()
+        })
 
       yield* writeText(path.join(generatedSiteDirectory, manifest.slug, "problems", slug, "index.md"), frontMatter(manifest, slug, rawProblem.name, false))
       yield* writeText(path.join(generatedSiteDirectory, manifest.slug, "problems", slug, "embed", "index.md"), frontMatter(manifest, slug, rawProblem.name, true))

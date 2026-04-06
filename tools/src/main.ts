@@ -5,12 +5,12 @@ import { generateSite } from "./programs/generate.js"
 
 const generate = Command.make("generate", {}, () => generateSite)
 
-const root = Command.make("nexum", {}, () => Effect.void).pipe(
+const root = Command.make("leowajda.github.io", {}, () => Effect.void).pipe(
   Command.withSubcommands([generate])
 )
 
 const cli = Command.run(root, {
-  name: "nexum",
+  name: "leowajda.github.io",
   version: "v0.1.0"
 })
 

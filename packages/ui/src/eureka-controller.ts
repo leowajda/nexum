@@ -70,7 +70,7 @@ const initializeProblemTable = () => {
     let visibleCount = 0
 
     rows.forEach((row) => {
-      const matchesSearch = !state.search || row.dataset.searchName?.includes(state.search)
+      const matchesSearch = !state.search || row.dataset.searchTitle?.includes(state.search)
       const matchesDifficulty = !state.difficulty || row.dataset.difficulty === state.difficulty
       const matchesLanguage = !state.language || row.dataset.languages?.split("|").includes(state.language)
       const categories = row.dataset.categories ? row.dataset.categories.split("|") : []

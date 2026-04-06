@@ -5,6 +5,11 @@
   margin-bottom: 1rem;
 }
 
+.problems-header .back-link,
+.problem-page > .back-link {
+  justify-self: start;
+}
+
 .problems-header p {
   max-width: 68ch;
 }
@@ -93,6 +98,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.35rem;
   padding: 0.45rem 0.85rem;
   border: 1px solid currentColor;
   background: white;
@@ -160,27 +166,16 @@
   border-bottom: 1px solid currentColor;
 }
 
-.problem-table th:nth-child(1) {
-  width: 18%;
+.problem-table th:first-child {
+  width: 30%;
 }
 
 .problem-table th:nth-child(2) {
-  width: 8%;
+  width: 25%;
 }
 
-.problem-table th:nth-child(3) {
-  width: 22%;
-}
-
-.problem-table th:nth-child(4),
-.problem-table th:nth-child(5),
-.problem-table th:nth-child(6),
-.problem-table th:nth-child(7) {
-  width: 12%;
-}
-
-.problem-table th:last-child {
-  width: 8%;
+.problem-table th:nth-child(n + 3) {
+  width: calc(45% / var(--language-columns));
 }
 
 .problem-table thead th {
@@ -192,8 +187,33 @@
   background: white;
 }
 
-.problem-row:hover {
-  background: rgba(0, 0, 0, 0.03);
+.problem-row > td {
+  background: white;
+  transition: background-color 120ms ease;
+}
+
+.problem-row--easy > td {
+  background: #f1f9f1;
+}
+
+.problem-row--medium > td {
+  background: #fbf4e1;
+}
+
+.problem-row--hard > td {
+  background: #f9e8e8;
+}
+
+.problem-row--easy:hover > td {
+  background: #e7f3e7;
+}
+
+.problem-row--medium:hover > td {
+  background: #f8ebca;
+}
+
+.problem-row--hard:hover > td {
+  background: #f4dede;
 }
 
 .problem-title__link {
@@ -210,6 +230,21 @@
   margin-top: 0.15rem;
   opacity: 0.65;
   font-size: 0.88rem;
+}
+
+.problem-title {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.problem-title__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.problem-title__action {
+  white-space: nowrap;
 }
 
 .badge {
@@ -309,8 +344,7 @@
 }
 
 .code-shell__panel {
-  display: grid;
-  gap: 0.85rem;
+  display: block;
 }
 
 .code-shell {
@@ -346,6 +380,10 @@
   background: #f8f8f8;
 }
 
+.code-markdown {
+  margin: 0;
+}
+
 .code-markdown .highlight pre {
   margin: 0;
   padding: 1rem;
@@ -355,6 +393,10 @@
 .code-markdown .highlight code {
   background: transparent;
   color: inherit;
+}
+
+.code-copy-button {
+  gap: 0.4rem;
 }
 
 .code-markdown .highlight .c,
@@ -424,7 +466,7 @@
 
 @media (max-width: 768px) {
   .problem-table {
-    min-width: 960px;
+    min-width: 900px;
   }
 
   .filter-row--search input {

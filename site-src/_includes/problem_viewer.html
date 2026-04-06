@@ -23,19 +23,37 @@
           <div class="code-shell__toolbar">
             <div class="approach-switcher" data-implementation-switcher>
               {%- for implementation in language_impls -%}
-                <button class="approach-tab{% if forloop.first %} is-active{% endif %}" type="button" data-implementation-target="{{ implementation.id }}">{{ implementation.approach }} solution</button>
+                <button class="approach-tab{% if forloop.first %} is-active{% endif %}" type="button" data-implementation-target="{{ implementation.id }}">
+                  {%- if implementation.approach == "iterative" -%}
+                    {%- include icon.html name="iterative" -%}
+                  {%- elsif implementation.approach == "recursive" -%}
+                    {%- include icon.html name="recursive" -%}
+                  {%- endif -%}
+                  <span>{{ implementation.approach }} solution</span>
+                </button>
               {%- endfor -%}
             </div>
             <div class="code-shell__action-groups">
               {%- for implementation in language_impls -%}
                 <div class="code-shell__actions" data-implementation-actions="{{ implementation.id }}"{% unless forloop.first %} hidden{% endunless %}>
                   {%- if embed -%}
-                    <a class="link-button" href="{{ problem.detail_url | relative_url }}?language={{ language.slug }}&implementation={{ implementation.id }}">Open page</a>
+                    <a class="link-button" href="{{ problem.detail_url | relative_url }}?language={{ language.slug }}&implementation={{ implementation.id }}">
+                      {%- include icon.html name="open-page" -%}
+                      <span>Open page</span>
+                    </a>
                   {%- else -%}
-                    <a class="link-button" href="{{ problem.embed_url | relative_url }}?language={{ language.slug }}&implementation={{ implementation.id }}">Open embed</a>
+                    <a class="link-button" href="{{ problem.embed_url | relative_url }}?language={{ language.slug }}&implementation={{ implementation.id }}">
+                      {%- include icon.html name="code" -%}
+                      <span>Open embed</span>
+                    </a>
                   {%- endif -%}
-                  <a class="link-button" href="{{ implementation.source_url }}" target="_blank" rel="noreferrer">Source code</a>
-                  <a class="link-button" href="{{ problem.url }}" target="_blank" rel="noreferrer">LeetCode</a>
+                  <a class="link-button" href="{{ implementation.source_url }}" target="_blank" rel="noreferrer">
+                    {%- include icon.html name="code" -%}
+                    <span>Source code</span>
+                  </a>
+                  <a class="link-button" href="{{ problem.url }}" target="_blank" rel="noreferrer" aria-label="Open LeetCode problem" title="Open LeetCode problem">
+                    {%- include icon.html name="leetcode" -%}
+                  </a>
                 </div>
               {%- endfor -%}
             </div>

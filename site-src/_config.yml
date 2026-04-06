@@ -3,8 +3,7 @@ author: Leonardo Wajda
 email: dev.leowajda@tuta.io
 url: https://leowajda.github.io
 baseurl: ""
-description: >
-  Personal website and project hub.
+description: ""
 
 markdown: kramdown
 highlighter: rouge
@@ -19,9 +18,9 @@ plugins:
 
 theme_config:
   appearance: "auto"
-  back_home_text: ".."
+  back_home_text: "Back home"
   date_format: "%Y-%m-%d"
-  show_description: true
+  show_description: false
   lowercase_titles: false
 
 generated_data_namespace: generated
