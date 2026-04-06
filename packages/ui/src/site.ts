@@ -67,6 +67,39 @@ const initializeThemeToggle = () => {
   })
 }
 
+const initializeBackButton = () => {
+  const button = document.querySelector<HTMLButtonElement>("[data-back-button]")
+  if (!button) {
+    return
+  }
+
+  let referrerUrl: URL | null = null
+
+  try {
+    const referrer = document.referrer
+    if (referrer) {
+      const parsed = new URL(referrer)
+      if (parsed.origin === window.location.origin) {
+        referrerUrl = parsed
+      }
+    }
+  } catch {
+    referrerUrl = null
+  }
+
+  if (!referrerUrl) {
+    button.hidden = true
+    return
+  }
+
+  button.hidden = false
+  button.setAttribute("aria-label", "Back to previous page")
+  button.setAttribute("title", "Back to previous page")
+  button.addEventListener("click", () => {
+    window.history.back()
+  })
+}
+
 const initializeCopyButtons = () => {
   const highlights = document.querySelectorAll<HTMLElement>(".highlight")
   highlights.forEach((highlight) => {
@@ -141,6 +174,7 @@ const start = () => {
   }
 
   runSafely("theme toggle", initializeThemeToggle)
+  runSafely("back button", initializeBackButton)
   runSafely("copy buttons", initializeCopyButtons)
   runSafely("math rendering", initializeMath)
 

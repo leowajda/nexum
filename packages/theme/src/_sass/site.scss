@@ -20,6 +20,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
+  min-height: 2.5rem;
   padding: 0.45rem 0.85rem;
   border: 1px solid currentColor;
   background: white;
@@ -32,8 +33,13 @@
 .icon-button {
   min-width: 2.5rem;
   min-height: 2.5rem;
-  padding: 0.55rem;
+  padding: 0.45rem;
   line-height: 0;
+}
+
+.icon-button .icon {
+  width: 1.35rem;
+  height: 1.35rem;
 }
 
 .site-nav__link-icon {
@@ -51,6 +57,17 @@
 .theme-toggle__icon {
   font-size: 1.35rem;
 }
+
+.site-nav .theme-toggle {
+  min-width: 3.5rem;
+  min-height: 3.5rem;
+}
+
+.site-nav [data-back-button] {
+  min-width: 3.5rem;
+  box-sizing: border-box;
+}
+
 
 .site-nav__link:hover,
 .link-button:hover,

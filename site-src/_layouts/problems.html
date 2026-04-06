@@ -122,7 +122,7 @@ layout: default
         >
           <td class="problem-title-cell">
             <div class="problem-title">
-              <a class="problem-title__link" href="{{ problem.detail_url | relative_url }}" target="_blank" rel="noreferrer">{{ problem.name }}</a>
+              <a class="problem-title__link" href="{{ problem.detail_url | relative_url }}">{{ problem.name }}</a>
               <div class="problem-title__slug">{{ problem.slug }}</div>
             </div>
           </td>
@@ -142,7 +142,15 @@ layout: default
                 {%- assign language_implementations = problem_page.implementations | where: "language", language.slug -%}
                 {%- if language_implementations.size > 0 -%}
                   {%- for implementation in language_implementations -%}
-                    <a class="solution-pill" href="{{ implementation.detail_url | relative_url }}">{{ implementation.approach }}</a>
+                    <a class="solution-pill{% if implementation.approach == 'iterative' or implementation.approach == 'recursive' %} solution-pill--icon{% endif %}" href="{{ implementation.detail_url | relative_url }}"{% if implementation.approach == 'iterative' or implementation.approach == 'recursive' %} aria-label="{{ implementation.approach_label }}" title="{{ implementation.approach_label }}"{% endif %}>
+                      {%- if implementation.approach == 'iterative' -%}
+                        {%- include icon.html name="iterative" -%}
+                      {%- elsif implementation.approach == 'recursive' -%}
+                        {%- include icon.html name="recursive" -%}
+                      {%- else -%}
+                        {{ implementation.approach }}
+                      {%- endif -%}
+                    </a>
                   {%- endfor -%}
                 {%- else -%}
                   <span class="solution-empty">—</span>

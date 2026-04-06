@@ -23,6 +23,7 @@
     "yaml": "^2.7.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@types/node": "^22.13.13",
     "tsx": "^4.19.3",
     "typescript": "^5.8.3"

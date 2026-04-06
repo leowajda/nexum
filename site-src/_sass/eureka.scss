@@ -94,6 +94,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
+  min-height: 2.5rem;
   padding: 0.45rem 0.85rem;
   border: 1px solid currentColor;
   background: white;
@@ -276,9 +277,22 @@
 }
 
 .solution-pill {
+  min-height: 2.5rem;
   padding: 0.25rem 0.5rem;
   font-size: 0.88rem;
   text-transform: lowercase;
+}
+
+.solution-pill--icon {
+  min-width: 2.5rem;
+  padding: 0.45rem;
+  line-height: 0;
+  box-sizing: border-box;
+}
+
+.solution-pill--icon .icon {
+  width: 1.35rem;
+  height: 1.35rem;
 }
 
 .solution-empty {
@@ -364,8 +378,8 @@
 }
 
 .approach-tab .icon {
-  width: 1.15em;
-  height: 1.15em;
+  width: 1.35rem;
+  height: 1.35rem;
 }
 
 .code-shell__action-groups,
@@ -374,6 +388,10 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
+}
+
+.code-shell__actions .link-button.icon-button {
+  box-sizing: border-box;
 }
 
 .code-shell__actions[hidden] {
