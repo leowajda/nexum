@@ -5,7 +5,6 @@ layout: default
 {%- assign problem = site.data.generated[page.project_key].problem_pages[page.problem_slug] -%}
 
 {%- if problem == nil -%}
-  {%- include back_link.html -%}
   <p>Problem data not found.</p>
 {%- else -%}
   <article class="problem-embed problem-embed--centered">

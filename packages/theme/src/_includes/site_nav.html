@@ -1,11 +1,12 @@
 <nav class="site-nav" aria-label="Main navigation">
   <div class="site-nav__links">
     {%- for entry in site.data.navigation.entries -%}
-      <a class="site-nav__link" href="{{ entry.url | relative_url }}">
+      <a class="site-nav__link{% if entry.icon %} icon-button{% endif %}" href="{{ entry.url | relative_url }}"{% if entry.icon %} aria-label="{{ entry.title }}" title="{{ entry.title }}"{% endif %}>
         {%- if entry.icon -%}
           {%- include icon.html name=entry.icon class="site-nav__link-icon" -%}
+        {%- else -%}
+          <span>{{ entry.title }}</span>
         {%- endif -%}
-        <span>{{ entry.title }}</span>
       </a>
     {%- endfor -%}
     {%- if page.project_key -%}

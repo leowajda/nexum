@@ -18,7 +18,6 @@ plugins:
 
 theme_config:
   appearance: "auto"
-  back_home_text: "Back home"
   date_format: "%Y-%m-%d"
   show_description: false
   lowercase_titles: false
