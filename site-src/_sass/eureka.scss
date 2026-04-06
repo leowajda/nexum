@@ -315,16 +315,18 @@
   overflow: hidden;
 }
 
-.problem-viewer__language-strip {
-  padding: 0.85rem;
-  border-bottom: 1px solid currentColor;
-}
-
 .language-switcher,
 .approach-switcher {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+
+.code-shell__selector-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
 }
 
 .language-panel {
@@ -354,6 +356,16 @@
   gap: 0.75rem;
   padding: 0.85rem;
   border-bottom: 1px solid currentColor;
+}
+
+.code-shell__toolbar .language-switcher,
+.code-shell__toolbar .approach-switcher {
+  gap: 0.5rem;
+}
+
+.approach-tab .icon {
+  width: 1.15em;
+  height: 1.15em;
 }
 
 .code-shell__action-groups,

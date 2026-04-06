@@ -4,43 +4,50 @@
 
 <section class="problem-viewer" data-problem-shell>
   <div class="problem-viewer__frame">
-    <div class="problem-viewer__language-strip">
-      <div class="language-switcher" data-language-switcher data-default-language="{{ first_language }}">
-        {%- for language in problem.languages -%}
-          <button class="language-tab{% if forloop.first %} is-active{% endif %}" type="button" data-language-target="{{ language.slug }}">{{ language.label }}</button>
-        {%- endfor -%}
-      </div>
-    </div>
-
     <div class="language-panels">
       {%- for language in problem.languages -%}
         {%- assign language_impls = problem.implementations | where: "language", language.slug -%}
         <section class="language-panel" data-language-panel data-language="{{ language.slug }}" data-default-implementation="{{ language_impls.first.id }}"{% unless forloop.first %} hidden{% endunless %}>
           <section class="code-shell">
             <div class="code-shell__toolbar">
-              <div class="approach-switcher" data-implementation-switcher>
-                {%- for implementation in language_impls -%}
-                  <button class="approach-tab{% if forloop.first %} is-active{% endif %}" type="button" data-implementation-target="{{ implementation.id }}">
-                    {{ implementation.approach }}
-                  </button>
-                {%- endfor -%}
+              <div class="code-shell__selector-groups">
+                <div class="language-switcher" data-language-switcher data-default-language="{{ first_language }}">
+                  {%- for language_option in problem.languages -%}
+                    <button class="language-tab{% if forloop.first %} is-active{% endif %}" type="button" data-language-target="{{ language_option.slug }}">{{ language_option.label }}</button>
+                  {%- endfor -%}
+                </div>
+
+                <div class="approach-switcher" data-implementation-switcher>
+                  {%- for implementation in language_impls -%}
+                    <button class="approach-tab{% if forloop.first %} is-active{% endif %}" type="button" data-implementation-target="{{ implementation.id }}" aria-label="{{ implementation.approach_label }}" title="{{ implementation.approach_label }}">
+                      {%- if implementation.approach == "iterative" -%}
+                        {%- include icon.html name="iterative" -%}
+                      {%- elsif implementation.approach == "recursive" -%}
+                        {%- include icon.html name="recursive" -%}
+                      {%- else -%}
+                        {{ implementation.approach_label }}
+                      {%- endif -%}
+                    </button>
+                  {%- endfor -%}
+                </div>
               </div>
+
               <div class="code-shell__action-groups">
                 {%- for implementation in language_impls -%}
                   <div class="code-shell__actions" data-implementation-actions="{{ implementation.id }}"{% unless forloop.first %} hidden{% endunless %}>
                     {%- if embed -%}
-                      <a class="link-button icon-button" href="{{ problem.detail_url | relative_url }}?language={{ language.slug }}&implementation={{ implementation.id }}" aria-label="Open page" title="Open page">
+                      <a class="link-button" href="{{ problem.detail_url | relative_url }}?language={{ language.slug }}&implementation={{ implementation.id }}" aria-label="Open page" title="Open page">
                         {%- include icon.html name="open-page" -%}
                       </a>
                     {%- else -%}
-                      <a class="link-button icon-button" href="{{ problem.embed_url | relative_url }}?language={{ language.slug }}&implementation={{ implementation.id }}" aria-label="Open embed" title="Open embed">
+                      <a class="link-button" href="{{ problem.embed_url | relative_url }}?language={{ language.slug }}&implementation={{ implementation.id }}" aria-label="Open embed" title="Open embed">
                         {%- include icon.html name="code" -%}
                       </a>
                     {%- endif -%}
-                    <a class="link-button icon-button" href="{{ implementation.source_url }}" target="_blank" rel="noreferrer" aria-label="Open source on GitHub" title="Open source on GitHub">
+                    <a class="link-button" href="{{ implementation.source_url }}" target="_blank" rel="noreferrer" aria-label="Open source on GitHub" title="Open source on GitHub">
                       {%- include icon.html name="github" -%}
                     </a>
-                    <a class="link-button icon-button" href="{{ problem.url }}" target="_blank" rel="noreferrer" aria-label="Open LeetCode problem" title="Open LeetCode problem">
+                    <a class="link-button" href="{{ problem.url }}" target="_blank" rel="noreferrer" aria-label="Open LeetCode problem" title="Open LeetCode problem">
                       {%- include icon.html name="leetcode" -%}
                     </a>
                   </div>
