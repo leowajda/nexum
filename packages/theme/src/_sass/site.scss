@@ -37,7 +37,7 @@
 }
 
 .site-nav__link-icon {
-  font-size: 1rem;
+  font-size: 1.15rem;
 }
 
 .icon {
@@ -49,7 +49,12 @@
 }
 
 .theme-toggle__icon {
-  font-size: 1rem;
+  font-size: 1.15rem;
+}
+
+.icon-button .icon {
+  width: 1.15em;
+  height: 1.15em;
 }
 
 .site-nav__link:hover,

@@ -3,66 +3,64 @@
 {%- assign first_language = problem.languages.first.slug -%}
 
 <section class="problem-viewer" data-problem-shell>
-  <div class="control-group viewer-control-group">
-    <div class="control-group__head">
-      <h2>Languages</h2>
-      <p>Choose which language to view.</p>
+  <div class="problem-viewer__frame">
+    <div class="problem-viewer__language-strip">
+      <div class="language-switcher" data-language-switcher data-default-language="{{ first_language }}">
+        {%- for language in problem.languages -%}
+          <button class="language-tab{% if forloop.first %} is-active{% endif %}" type="button" data-language-target="{{ language.slug }}">{{ language.label }}</button>
+        {%- endfor -%}
+      </div>
     </div>
-    <div class="language-switcher" data-language-switcher data-default-language="{{ first_language }}">
+
+    <div class="language-panels">
       {%- for language in problem.languages -%}
-        <button class="language-tab{% if forloop.first %} is-active{% endif %}" type="button" data-language-target="{{ language.slug }}">{{ language.label }}</button>
-      {%- endfor -%}
-    </div>
-  </div>
-
-  <div class="language-panels">
-    {%- for language in problem.languages -%}
-      {%- assign language_impls = problem.implementations | where: "language", language.slug -%}
-      <section class="language-panel" data-language-panel data-language="{{ language.slug }}" data-default-implementation="{{ language_impls.first.id }}"{% unless forloop.first %} hidden{% endunless %}>
-        <section class="code-shell">
-          <div class="code-shell__toolbar">
-            <div class="approach-switcher" data-implementation-switcher>
-              {%- for implementation in language_impls -%}
-                <button class="approach-tab{% if forloop.first %} is-active{% endif %}" type="button" data-implementation-target="{{ implementation.id }}">
-                  {{ implementation.approach }}
-                </button>
-              {%- endfor -%}
-            </div>
-            <div class="code-shell__action-groups">
-              {%- for implementation in language_impls -%}
-                <div class="code-shell__actions" data-implementation-actions="{{ implementation.id }}"{% unless forloop.first %} hidden{% endunless %}>
-                  {%- if embed -%}
-                    <a class="link-button" href="{{ problem.detail_url | relative_url }}?language={{ language.slug }}&implementation={{ implementation.id }}" aria-label="Open page" title="Open page">
-                      {%- include icon.html name="open-page" -%}
+        {%- assign language_impls = problem.implementations | where: "language", language.slug -%}
+        <section class="language-panel" data-language-panel data-language="{{ language.slug }}" data-default-implementation="{{ language_impls.first.id }}"{% unless forloop.first %} hidden{% endunless %}>
+          <section class="code-shell">
+            <div class="code-shell__toolbar">
+              <div class="approach-switcher" data-implementation-switcher>
+                {%- for implementation in language_impls -%}
+                  <button class="approach-tab{% if forloop.first %} is-active{% endif %}" type="button" data-implementation-target="{{ implementation.id }}">
+                    {{ implementation.approach }}
+                  </button>
+                {%- endfor -%}
+              </div>
+              <div class="code-shell__action-groups">
+                {%- for implementation in language_impls -%}
+                  <div class="code-shell__actions" data-implementation-actions="{{ implementation.id }}"{% unless forloop.first %} hidden{% endunless %}>
+                    {%- if embed -%}
+                      <a class="link-button icon-button" href="{{ problem.detail_url | relative_url }}?language={{ language.slug }}&implementation={{ implementation.id }}" aria-label="Open page" title="Open page">
+                        {%- include icon.html name="open-page" -%}
+                      </a>
+                    {%- else -%}
+                      <a class="link-button icon-button" href="{{ problem.embed_url | relative_url }}?language={{ language.slug }}&implementation={{ implementation.id }}" aria-label="Open embed" title="Open embed">
+                        {%- include icon.html name="code" -%}
+                      </a>
+                    {%- endif -%}
+                    <a class="link-button icon-button" href="{{ implementation.source_url }}" target="_blank" rel="noreferrer" aria-label="Open source on GitHub" title="Open source on GitHub">
+                      {%- include icon.html name="github" -%}
                     </a>
-                  {%- else -%}
-                    <a class="link-button" href="{{ problem.embed_url | relative_url }}?language={{ language.slug }}&implementation={{ implementation.id }}" aria-label="Open embed" title="Open embed">
-                      {%- include icon.html name="code" -%}
+                    <a class="link-button icon-button" href="{{ problem.url }}" target="_blank" rel="noreferrer" aria-label="Open LeetCode problem" title="Open LeetCode problem">
+                      {%- include icon.html name="leetcode" -%}
                     </a>
-                  {%- endif -%}
-                  <a class="link-button" href="{{ implementation.source_url }}" target="_blank" rel="noreferrer" aria-label="Open source on GitHub" title="Open source on GitHub">
-                    {%- include icon.html name="github" -%}
-                  </a>
-                  <a class="link-button" href="{{ problem.url }}" target="_blank" rel="noreferrer" aria-label="Open LeetCode problem" title="Open LeetCode problem">
-                    {%- include icon.html name="leetcode" -%}
-                  </a>
-                </div>
-              {%- endfor -%}
+                  </div>
+                {%- endfor -%}
+              </div>
             </div>
-          </div>
 
-          {%- for implementation in language_impls -%}
-            <section class="code-shell__panel" data-implementation-panel id="{{ implementation.id }}"{% unless forloop.first %} hidden{% endunless %}>
-              {%- capture code_block -%}
+            {%- for implementation in language_impls -%}
+              <section class="code-shell__panel" data-implementation-panel id="{{ implementation.id }}"{% unless forloop.first %} hidden{% endunless %}>
+                {%- capture code_block -%}
 ```{{ implementation.code_language }}
 {{ implementation.code }}
 ```
-              {%- endcapture -%}
-              <div class="code-markdown">{{ code_block | markdownify }}</div>
-            </section>
-          {%- endfor -%}
+                {%- endcapture -%}
+                <div class="code-markdown">{{ code_block | markdownify }}</div>
+              </section>
+            {%- endfor -%}
+          </section>
         </section>
-      </section>
-    {%- endfor -%}
+      {%- endfor -%}
+    </div>
   </div>
 </section>
