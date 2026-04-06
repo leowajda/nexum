@@ -29,17 +29,17 @@
   cursor: pointer;
 }
 
+.icon-button {
+  padding: 0.4rem;
+  line-height: 0;
+}
+
 .icon {
   display: inline-block;
   width: 1em;
   height: 1em;
   flex: 0 0 auto;
   fill: currentColor;
-}
-
-.theme-toggle__label,
-.link-button span:last-child {
-  white-space: nowrap;
 }
 
 .theme-toggle__icon,

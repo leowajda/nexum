@@ -35,18 +35,14 @@ const applyTheme = (theme: Theme) => {
 const updateThemeButton = (button: HTMLButtonElement) => {
   const currentTheme = resolveTheme()
   const nextTheme: Theme = currentTheme === "dark" ? "light" : "dark"
-  const label = button.querySelector<HTMLElement>("[data-theme-label]")
   const icon = button.querySelector<SVGUseElement>(".theme-toggle__icon use")
-
-  if (label) {
-    label.textContent = `${nextTheme === "dark" ? "Dark" : "Light"} mode`
-  }
 
   if (icon) {
     icon.setAttribute("href", `#icon-theme-${nextTheme}`)
   }
 
   button.setAttribute("aria-label", `Switch to ${nextTheme} mode`)
+  button.setAttribute("title", `Switch to ${nextTheme} mode`)
 }
 
 const initializeThemeToggle = () => {
@@ -89,25 +85,26 @@ const initializeCopyButtons = () => {
 
     const button = document.createElement("button")
     button.type = "button"
-    button.className = "link-button code-copy-button"
-
-    const label = document.createElement("span")
-    label.textContent = "Copy"
-
-    button.append(createIcon("copy"), label)
+    button.className = "link-button icon-button code-copy-button"
+    button.append(createIcon("copy"))
     button.setAttribute("aria-label", "Copy code")
+    button.setAttribute("title", "Copy code")
     button.addEventListener("click", () => {
       void navigator.clipboard.writeText(code.innerText)
         .then(() => {
-          label.textContent = "Copied"
+          button.setAttribute("title", "Copied")
+          button.setAttribute("aria-label", "Copied")
           window.setTimeout(() => {
-            label.textContent = "Copy"
+            button.setAttribute("title", "Copy code")
+            button.setAttribute("aria-label", "Copy code")
           }, 1200)
         })
         .catch(() => {
-          label.textContent = "Failed"
+          button.setAttribute("title", "Copy failed")
+          button.setAttribute("aria-label", "Copy failed")
           window.setTimeout(() => {
-            label.textContent = "Copy"
+            button.setAttribute("title", "Copy code")
+            button.setAttribute("aria-label", "Copy code")
           }, 1200)
         })
     })
