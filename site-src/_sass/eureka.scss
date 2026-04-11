@@ -324,9 +324,10 @@
 .problem-viewer__frame {
   display: grid;
   gap: 0;
-  border: 1px solid currentColor;
-  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.82);
   overflow: hidden;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.03);
 }
 
 .language-switcher,
@@ -359,7 +360,7 @@
 
 .code-shell {
   display: grid;
-  background: white;
+  background: transparent;
 }
 
 .code-shell__toolbar {
@@ -369,7 +370,8 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.85rem;
-  border-bottom: 1px solid currentColor;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.015);
 }
 
 .code-shell__toolbar .language-switcher,
@@ -400,7 +402,8 @@
 
 .code-markdown .highlight {
   margin: 0;
-  background: #f8f8f8;
+  background: transparent;
+  border: 0;
 }
 
 .code-markdown {
@@ -409,12 +412,17 @@
 
 .code-markdown .highlighter-rouge {
   margin: 0;
+  background: transparent;
 }
 
 .code-markdown .highlight pre {
   margin: 0;
-  padding: 0;
+  padding: 1rem 1.1rem;
   overflow-x: auto;
+  background: #fcfcfc;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0.65rem;
+  box-shadow: none;
 }
 
 .code-markdown .highlight code {

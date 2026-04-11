@@ -13,7 +13,7 @@
 
 ## Preview
 - URL: `http://127.0.0.1:4173`
-- `pnpm preview` runs the real pipeline: generate -> Jekyll build -> static server
+- `pnpm preview` runs the real pipeline, then starts `jekyll serve` with `--livereload`
 - Prefer `pnpm preview` over `pnpm serve` for debugging and browser automation
 
 ## Playwright

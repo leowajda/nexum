@@ -3,10 +3,10 @@ import path from "node:path"
 import { buildBrowserAssets } from "../core/assets.js"
 import { decodeYaml, encodeYaml } from "../core/yaml.js"
 import { FileStore, WorkspaceLive } from "../core/workspace.js"
-import { generatedSiteDirectory, projectsDirectory, siteSourceDirectory, themeSourceDirectory } from "../core/paths.js"
+import { generatedSiteDirectory, projectsDirectory, rootDirectory, siteSourceDirectory, themeSourceDirectory } from "../core/paths.js"
 import { ProjectAdapterRegistry, ProjectAdapterRegistryLive } from "../projects/registry.js"
 import { ProjectManifestSchema } from "../projects/schema.js"
-import { ProjectRegistryError } from "../core/errors.js"
+import { ProjectRegistryError, ProjectSourceMissingError } from "../core/errors.js"
 import { ProjectCardSchema, type ProjectBuild } from "../projects/types.js"
 
 const ProjectsSchema = Schema.Array(ProjectCardSchema)
@@ -27,22 +27,42 @@ const writeBuildOutputs = (builds: ReadonlyArray<ProjectBuild>) =>
   Effect.gen(function* () {
     const fileStore = yield* FileStore
     const files = builds.flatMap((build) => build.files)
+    const assets = builds.flatMap((build) => build.assets)
     const projectsYaml = yield* encodeYaml("Unable to encode generated project index", ProjectsSchema, builds.map((build) => build.card))
 
     yield* Effect.forEach(files, (file) => fileStore.writeText(file.path, file.content), { concurrency: 8 })
+    yield* Effect.forEach(assets, (asset) => fileStore.copyFile(asset.source_path, asset.target_path), { concurrency: 8 })
     yield* fileStore.writeText(path.join(generatedSiteDirectory, "_data/generated/projects.yml"), projectsYaml)
   })
 
 const buildProjects = Effect.gen(function* () {
   const manifests = yield* loadProjectManifests
   const { adapters } = yield* ProjectAdapterRegistry
+  const fileStore = yield* FileStore
 
-  return yield* Effect.forEach(manifests, (manifest) => {
-    const adapter = adapters[manifest.kind]
-    return adapter
-      ? adapter.build(manifest)
-      : Effect.fail(new ProjectRegistryError({ kind: manifest.kind }))
-  }, { concurrency: 4 })
+  return yield* Effect.forEach(manifests, (manifest) =>
+    fileStore.fileExists(path.join(rootDirectory, manifest.source_repo_path)).pipe(
+      Effect.flatMap((exists) => {
+        if (!exists && manifest.source_optional) {
+          return Effect.succeed(null)
+        }
+
+        if (!exists) {
+          return Effect.fail(new ProjectSourceMissingError({
+            slug: manifest.slug,
+            sourcePath: path.join(rootDirectory, manifest.source_repo_path)
+          }))
+        }
+
+        const adapter = adapters[manifest.kind]
+        return adapter
+          ? adapter.build(manifest)
+          : Effect.fail(new ProjectRegistryError({ kind: manifest.kind }))
+      })
+    )
+  , { concurrency: 4 }).pipe(
+    Effect.map((builds) => builds.filter((build): build is ProjectBuild => build !== null))
+  )
 })
 
 const program = Effect.gen(function* () {

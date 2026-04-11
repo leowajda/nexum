@@ -1,0 +1,68 @@
+---
+layout: default
+---
+
+{%- assign notes = site.data.generated[page.project_key].source_notes -%}
+{%- assign current_module = notes.modules | where: "slug", page.module_slug | first -%}
+{%- if current_module != nil -%}
+  {%- assign current_document = current_module.documents | where: "id", page.document_id | first -%}
+{%- endif -%}
+
+{%- if current_module == nil or current_document == nil -%}
+  <p>Source document data not found.</p>
+{%- else -%}
+  <section class="source-shell">
+    {%- include source_sidebar.html notes=notes -%}
+
+    <article class="source-main">
+      <header class="page-header source-page-header">
+        <nav class="source-breadcrumbs" aria-label="Breadcrumb">
+          <ol>
+            {%- for crumb in current_document.breadcrumbs -%}
+              <li>
+                {%- if crumb.url != "" -%}
+                  <a href="{{ crumb.url | relative_url }}">{{ crumb.label }}</a>
+                {%- else -%}
+                  <span>{{ crumb.label }}</span>
+                {%- endif -%}
+              </li>
+            {%- endfor -%}
+          </ol>
+        </nav>
+
+        <h1>{{ current_document.title }}</h1>
+        <p class="source-page-header__meta">
+          {{ current_document.language }} · {{ current_document.source_path }}
+        </p>
+      </header>
+
+      {%- if current_document.format == "code" -%}
+        <section class="problem-viewer">
+          <div class="problem-viewer__frame">
+            <section class="code-shell">
+              <div class="code-shell__toolbar">
+                <div class="code-shell__selector-groups"></div>
+                <div class="code-shell__action-groups">
+                  <div class="code-shell__actions">
+                    {%- if page.page_source_url -%}
+                      <a class="link-button icon-button" href="{{ page.page_source_url }}" target="_blank" rel="noreferrer" aria-label="Open source on GitHub" title="Open source on GitHub">
+                        {%- include icon.html name="github" -%}
+                      </a>
+                    {%- endif -%}
+                  </div>
+                </div>
+              </div>
+              <section class="code-shell__panel">
+                <div class="code-markdown">{{ content }}</div>
+              </section>
+            </section>
+          </div>
+        </section>
+      {%- else -%}
+        <section class="source-article source-article--document">
+          {{ content }}
+        </section>
+      {%- endif -%}
+    </article>
+  </section>
+{%- endif -%}

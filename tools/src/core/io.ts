@@ -24,8 +24,8 @@ export const readText = (filePath: string) =>
 
 export const copyFile = (fromPath: string, toPath: string) =>
   attemptFileSystem("copyFile", `${fromPath} -> ${toPath}`, async () => {
-      await fs.mkdir(path.dirname(toPath), { recursive: true })
-      await fs.copyFile(fromPath, toPath)
+    await fs.mkdir(path.dirname(toPath), { recursive: true })
+    await fs.copyFile(fromPath, toPath)
   })
 
 export const removeDirectory = (directory: string) =>

@@ -15,13 +15,20 @@ export const GeneratedTextFileSchema = Schema.Struct({
   content: Schema.String
 })
 
+export const GeneratedAssetFileSchema = Schema.Struct({
+  source_path: Schema.String,
+  target_path: Schema.String
+})
+
 export const ProjectBuildSchema = Schema.Struct({
   card: ProjectCardSchema,
-  files: Schema.Array(GeneratedTextFileSchema)
+  files: Schema.Array(GeneratedTextFileSchema),
+  assets: Schema.Array(GeneratedAssetFileSchema)
 })
 
 export type ProjectCard = Schema.Schema.Type<typeof ProjectCardSchema>
 export type GeneratedTextFile = Schema.Schema.Type<typeof GeneratedTextFileSchema>
+export type GeneratedAssetFile = Schema.Schema.Type<typeof GeneratedAssetFileSchema>
 export type ProjectBuild = Schema.Schema.Type<typeof ProjectBuildSchema>
 
 export type ProjectAdapter = {

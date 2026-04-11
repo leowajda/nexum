@@ -1,41 +1,45 @@
 import { Effect } from "effect"
-import { execFile } from "node:child_process"
-import { promisify } from "node:util"
-import path from "node:path"
+import { spawn } from "node:child_process"
 import { rootDirectory } from "../core/paths.js"
 import { previewHost, previewPort } from "../core/preview.js"
-import { startStaticServer } from "../core/server.js"
 import { generateSite } from "./generate.js"
 
-const execFileAsync = promisify(execFile)
+const startJekyllPreview = Effect.acquireRelease(
+  Effect.try({
+    try: () => {
+      const child = spawn("bundle", [
+        "exec",
+        "jekyll",
+        "serve",
+        "--source",
+        "site",
+        "--destination",
+        "_site",
+        "--host",
+        previewHost,
+        "--port",
+        String(previewPort),
+        "--livereload"
+      ], {
+        cwd: rootDirectory,
+        stdio: "inherit"
+      })
 
-const buildRenderedSite = Effect.tryPromise({
-  try: async () => {
-    await execFileAsync("bundle", [
-      "exec",
-      "jekyll",
-      "build",
-      "--source",
-      "site",
-      "--destination",
-      "_site"
-    ], { cwd: rootDirectory })
-  },
-  catch: (error) => new Error(`Unable to build rendered site: ${String(error)}`)
-})
+      return child
+    },
+    catch: (error) => new Error(`Unable to start preview server: ${String(error)}`)
+  }),
+  (child) =>
+    Effect.sync(() => {
+      child.kill("SIGTERM")
+    })
+)
 
 const program = Effect.gen(function* () {
   yield* generateSite
-  yield* buildRenderedSite
+  yield* startJekyllPreview
 
-  const { url } = yield* startStaticServer({
-    rootDirectory: path.join(rootDirectory, "_site"),
-    host: previewHost,
-    port: previewPort
-  })
-
-  yield* Effect.log(`Preview ready: ${url}`)
-  yield* Effect.log(`Serving rendered site from ${path.join(rootDirectory, "_site")}`)
+  yield* Effect.log(`Preview ready: http://${previewHost}:${previewPort}`)
   yield* Effect.never
 })
 
