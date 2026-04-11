@@ -1,3 +1,5 @@
+@use "ui";
+
 .site-nav {
   display: flex;
   flex-wrap: wrap;
@@ -16,30 +18,11 @@
 .site-nav__link,
 .link-button,
 .theme-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  min-height: 2.5rem;
-  padding: 0.45rem 0.85rem;
-  border: 1px solid currentColor;
-  background: white;
-  color: inherit;
-  text-decoration: none;
-  font: inherit;
-  cursor: pointer;
+  @include ui.interactive-control;
 }
 
 .icon-button {
-  min-width: 2.5rem;
-  min-height: 2.5rem;
-  padding: 0.45rem;
-  line-height: 0;
-}
-
-.icon-button .icon {
-  width: 1.35rem;
-  height: 1.35rem;
+  @include ui.icon-control;
 }
 
 .site-nav__link-icon {
@@ -72,8 +55,7 @@
 .site-nav__link:hover,
 .link-button:hover,
 .theme-toggle:hover {
-  background: black;
-  color: white;
+  @include ui.interactive-control-active;
 }
 
 .page-header {
@@ -96,8 +78,7 @@
   display: grid;
   gap: 0.8rem;
   padding: 1rem;
-  border: 1px solid currentColor;
-  background: rgba(0, 0, 0, 0.02);
+  @include ui.surface-card;
 }
 
 .content-card h3 {
@@ -170,70 +151,7 @@
   color: inherit;
 }
 
-.highlight .c,
-.highlight .c1,
-.highlight .cm,
-.highlight .cp {
-  color: #6a737d;
-}
-
-.highlight .k,
-.highlight .kd,
-.highlight .kn,
-.highlight .kp,
-.highlight .kr {
-  color: #d73a49;
-}
-
-.highlight .kt,
-.highlight .nc,
-.highlight .nd {
-  color: #6f42c1;
-}
-
-.highlight .nf,
-.highlight .fm {
-  color: #005cc5;
-}
-
-.highlight .s,
-.highlight .sa,
-.highlight .sb,
-.highlight .sc,
-.highlight .dl,
-.highlight .sd,
-.highlight .s2,
-.highlight .sh,
-.highlight .si,
-.highlight .sr,
-.highlight .ss {
-  color: #032f62;
-}
-
-.highlight .m,
-.highlight .mb,
-.highlight .mf,
-.highlight .mh,
-.highlight .mi,
-.highlight .il {
-  color: #005cc5;
-}
-
-.highlight .o,
-.highlight .ow {
-  color: #d73a49;
-}
-
-.highlight .p {
-  color: inherit;
-}
-
-.highlight .na,
-.highlight .nb,
-.highlight .bp,
-.highlight .nv {
-  color: #24292e;
-}
+@include ui.code-token-colors(".highlight");
 
 .math-block {
   overflow-x: auto;

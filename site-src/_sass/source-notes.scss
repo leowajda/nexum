@@ -1,3 +1,5 @@
+@use "ui";
+
 .content-stack {
   display: grid;
   gap: 1rem;
@@ -46,8 +48,7 @@
   display: grid;
   gap: 0.9rem;
   padding: 1rem 1.1rem;
-  border: 1px solid rgba(0, 0, 0, 0.14);
-  background: rgba(0, 0, 0, 0.015);
+  @include ui.surface-card(rgba(0, 0, 0, 0.015), 1px solid rgba(0, 0, 0, 0.14));
   max-height: calc(100vh - 2rem);
   overflow: auto;
 }
