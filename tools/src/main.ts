@@ -6,7 +6,7 @@ import { generateSite } from "./programs/generate.js"
 import { previewSite } from "./programs/preview.js"
 import { syncSources } from "./programs/sync.js"
 
-const docs = Command.make("docs", {}, () => Effect.scoped(refreshDocs))
+const docs = Command.make("docs", {}, () => refreshDocs)
 const generate = Command.make("generate", {}, () => generateSite)
 const preview = Command.make("preview", {}, () => Effect.scoped(previewSite))
 const sync = Command.make("sync-sources", {}, () => syncSources)
