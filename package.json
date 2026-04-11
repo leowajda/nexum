@@ -5,10 +5,12 @@
   "type": "module",
   "packageManager": "pnpm@10.6.5",
   "scripts": {
+    "sync:sources": "tsx tools/src/main.ts sync-sources",
     "generate": "tsx tools/src/main.ts generate",
     "build:site": "pnpm generate && bundle exec jekyll build --source site --destination _site",
     "serve": "pnpm generate && bundle exec jekyll serve --source site --destination _site --livereload",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:tools": "node --import tsx --test tools/test/**/*.test.ts"
   },
   "dependencies": {
     "@effect/cli": "^0.75.0",

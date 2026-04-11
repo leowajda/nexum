@@ -2,6 +2,7 @@ import { Effect } from "effect"
 import { build } from "esbuild"
 import fs from "node:fs/promises"
 import path from "node:path"
+import { AssetBuildError } from "./errors.js"
 import { generatedSiteDirectory, nodeModulesDirectory, rootDirectory } from "./paths.js"
 
 export const buildBrowserAssets = Effect.tryPromise({
@@ -27,5 +28,5 @@ export const buildBrowserAssets = Effect.tryPromise({
       fs.copyFile(path.join(katexDirectory, "fonts", entry), path.join(generatedSiteDirectory, "assets/vendor/katex/fonts", entry))
     ))
   },
-  catch: (error) => new Error(`Unable to build browser assets: ${String(error)}`)
+  catch: (error) => new AssetBuildError({ reason: String(error) })
 })

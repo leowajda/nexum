@@ -1,50 +1,59 @@
-import { Effect, Layer, ParseResult, Schema } from "effect"
+import { Effect, Layer, Schema } from "effect"
 import path from "node:path"
-import yaml from "yaml"
 import { buildBrowserAssets } from "../core/assets.js"
-import { Workspace, WorkspaceLive } from "../core/workspace.js"
+import { decodeYaml, encodeYaml } from "../core/yaml.js"
+import { FileStore, WorkspaceLive } from "../core/workspace.js"
 import { generatedSiteDirectory, projectsDirectory, siteSourceDirectory, themeSourceDirectory } from "../core/paths.js"
 import { ProjectAdapterRegistry, ProjectAdapterRegistryLive } from "../projects/registry.js"
 import { ProjectManifestSchema } from "../projects/schema.js"
+import { ProjectRegistryError } from "../core/errors.js"
+import { ProjectCardSchema, type ProjectBuild } from "../projects/types.js"
 
-const formatSchemaError = (context: string) => (error: ParseResult.ParseError) =>
-  new Error(`${context}\n${ParseResult.TreeFormatter.formatErrorSync(error)}`)
-
-const parseYaml = <T>(context: string, raw: string, decoder: (input: unknown) => Effect.Effect<T, ParseResult.ParseError, never>) =>
-  Effect.try({
-    try: () => yaml.parse(raw),
-    catch: (error) => new Error(`${context}: unable to parse YAML: ${String(error)}`)
-  }).pipe(Effect.flatMap((value) => decoder(value).pipe(Effect.mapError(formatSchemaError(context)))))
+const ProjectsSchema = Schema.Array(ProjectCardSchema)
 
 const loadProjectManifests = Effect.gen(function* () {
-  const workspace = yield* Workspace
-  const entries = yield* workspace.readDirectory(projectsDirectory)
+  const fileStore = yield* FileStore
+  const entries = yield* fileStore.readDirectory(projectsDirectory)
   const manifestFiles = entries.filter((entry) => entry.isFile() && entry.name.endsWith(".yml"))
+
   return yield* Effect.forEach(manifestFiles, (entry) =>
-    workspace.readText(path.join(projectsDirectory, entry.name)).pipe(
-      Effect.flatMap((content) => parseYaml(`Unable to decode project manifest '${entry.name}'`, content, Schema.decodeUnknown(ProjectManifestSchema)))
+    fileStore.readText(path.join(projectsDirectory, entry.name)).pipe(
+      Effect.flatMap((content) => decodeYaml(`Unable to decode project manifest '${entry.name}'`, content, ProjectManifestSchema))
     )
   )
 })
 
-const program = Effect.gen(function* () {
-  const workspace = yield* Workspace
+const writeBuildOutputs = (builds: ReadonlyArray<ProjectBuild>) =>
+  Effect.gen(function* () {
+    const fileStore = yield* FileStore
+    const files = builds.flatMap((build) => build.files)
+    const projectsYaml = yield* encodeYaml("Unable to encode generated project index", ProjectsSchema, builds.map((build) => build.card))
 
+    yield* Effect.forEach(files, (file) => fileStore.writeText(file.path, file.content), { concurrency: 8 })
+    yield* fileStore.writeText(path.join(generatedSiteDirectory, "_data/generated/projects.yml"), projectsYaml)
+  })
+
+const buildProjects = Effect.gen(function* () {
   const manifests = yield* loadProjectManifests
   const { adapters } = yield* ProjectAdapterRegistry
 
-  yield* workspace.removeDirectory(generatedSiteDirectory)
-  yield* workspace.copyDirectoryContents(themeSourceDirectory, generatedSiteDirectory)
-  yield* workspace.copyDirectoryContents(siteSourceDirectory, generatedSiteDirectory)
-
-  const projectCards = yield* Effect.forEach(manifests, (manifest) => {
+  return yield* Effect.forEach(manifests, (manifest) => {
     const adapter = adapters[manifest.kind]
     return adapter
       ? adapter.build(manifest)
-      : Effect.fail(new Error(`No project adapter registered for kind '${manifest.kind}'`))
-  })
+      : Effect.fail(new ProjectRegistryError({ kind: manifest.kind }))
+  }, { concurrency: 4 })
+})
 
-  yield* workspace.writeText(path.join(generatedSiteDirectory, "_data/generated/projects.yml"), yaml.stringify(projectCards))
+const program = Effect.gen(function* () {
+  const fileStore = yield* FileStore
+
+  yield* fileStore.removeDirectory(generatedSiteDirectory)
+  yield* fileStore.copyDirectoryContents(themeSourceDirectory, generatedSiteDirectory)
+  yield* fileStore.copyDirectoryContents(siteSourceDirectory, generatedSiteDirectory)
+
+  const builds = yield* buildProjects
+  yield* writeBuildOutputs(builds)
   yield* buildBrowserAssets
 })
 

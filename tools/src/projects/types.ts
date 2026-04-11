@@ -1,16 +1,30 @@
-import { Effect } from "effect"
-import type { Workspace } from "../core/workspace.js"
+import { Effect, Schema } from "effect"
+import type { FileStore, GitClient } from "../core/workspace.js"
 import type { ProjectManifest } from "./schema.js"
 
-export type ProjectCard = {
-  slug: string
-  title: string
-  description: string
-  url: string
-  source_url: string
-}
+export const ProjectCardSchema = Schema.Struct({
+  slug: Schema.String,
+  title: Schema.String,
+  description: Schema.String,
+  url: Schema.String,
+  source_url: Schema.String
+})
+
+export const GeneratedTextFileSchema = Schema.Struct({
+  path: Schema.String,
+  content: Schema.String
+})
+
+export const ProjectBuildSchema = Schema.Struct({
+  card: ProjectCardSchema,
+  files: Schema.Array(GeneratedTextFileSchema)
+})
+
+export type ProjectCard = Schema.Schema.Type<typeof ProjectCardSchema>
+export type GeneratedTextFile = Schema.Schema.Type<typeof GeneratedTextFileSchema>
+export type ProjectBuild = Schema.Schema.Type<typeof ProjectBuildSchema>
 
 export type ProjectAdapter = {
   readonly kind: string
-  readonly build: (manifest: ProjectManifest) => Effect.Effect<ProjectCard, Error, Workspace>
+  readonly build: (manifest: ProjectManifest) => Effect.Effect<ProjectBuild, Error, FileStore | GitClient>
 }
