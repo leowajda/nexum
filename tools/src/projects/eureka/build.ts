@@ -75,7 +75,8 @@ const buildEureka = (manifest: ProjectManifest) =>
 
     return {
       card: buildCard(manifest, sourceUrl),
-      files: [...model.files, ...dataFiles]
+      files: [...model.files, ...dataFiles],
+      assets: []
     } satisfies ProjectBuild
   })
 

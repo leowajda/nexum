@@ -2,6 +2,7 @@
   <div class="site-nav__links">
     {%- if page.project_key -%}
       {%- assign current_project = site.data.generated.projects | where: "slug", page.project_key | first -%}
+      {%- assign nav_source_url = page.page_source_url | default: current_project.source_url -%}
       <button class="site-nav__link icon-button" type="button" data-back-button hidden aria-label="Back to previous page" title="Back to previous page">
         {%- include icon.html name="back" class="site-nav__link-icon" -%}
       </button>
@@ -16,8 +17,8 @@
       </a>
     {%- endfor -%}
     {%- if page.project_key -%}
-      {%- if current_project and current_project.source_url -%}
-        <a class="site-nav__link icon-button" href="{{ current_project.source_url }}" target="_blank" rel="noreferrer" aria-label="Project source on GitHub" title="Project source on GitHub">
+      {%- if nav_source_url -%}
+        <a class="site-nav__link icon-button" href="{{ nav_source_url }}" target="_blank" rel="noreferrer" aria-label="Source on GitHub" title="Source on GitHub">
           {%- include icon.html name="github" class="site-nav__link-icon" -%}
         </a>
       {%- endif -%}

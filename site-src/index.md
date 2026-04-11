@@ -6,12 +6,27 @@ description: ""
 
 ## Projects
 
-<div class="card-grid">
+<div class="content-stack">
   {%- for project in site.data.generated.projects -%}
-    <article class="content-card">
-      <h3><a href="{{ project.url | relative_url }}">{{ project.title }}</a></h3>
-      <p>{{ project.description }}</p>
-    </article>
+    {%- assign source_notes = site.data.generated[project.slug].source_notes -%}
+    {%- if source_notes -%}
+      <article class="content-card content-card--compact">
+        <h3>{{ project.title }}</h3>
+        <p>{{ project.description }}</p>
+        <ul class="project-collection" aria-label="{{ project.title }} entries">
+          {%- for module in source_notes.modules -%}
+            <li class="project-collection__item">
+              <a class="project-collection__entry" href="{{ module.url | relative_url }}">{{ module.title }}</a>
+            </li>
+          {%- endfor -%}
+        </ul>
+      </article>
+    {%- else -%}
+      <article class="content-card content-card--compact">
+        <h3><a href="{{ project.url | relative_url }}">{{ project.title }}</a></h3>
+        <p>{{ project.description }}</p>
+      </article>
+    {%- endif -%}
   {%- endfor -%}
 </div>
 

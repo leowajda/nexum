@@ -5,6 +5,7 @@ dist/
 
 vendor/bundle/
 .bundle/
+__pycache__/
 
 site/
 _site/

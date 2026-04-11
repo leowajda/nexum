@@ -1,5 +1,6 @@
 import { Context, Effect, Layer } from "effect"
 import {
+  copyFile,
   copyDirectoryContents,
   fileExists,
   readDirectory,
@@ -13,6 +14,7 @@ export interface FileStoreService {
   readonly readDirectory: typeof readDirectory
   readonly readText: typeof readText
   readonly writeText: typeof writeText
+  readonly copyFile: typeof copyFile
   readonly removeDirectory: typeof removeDirectory
   readonly copyDirectoryContents: typeof copyDirectoryContents
   readonly fileExists: typeof fileExists
@@ -30,6 +32,7 @@ export const FileStoreLive = Layer.succeed(FileStore, {
   readDirectory,
   readText,
   writeText,
+  copyFile,
   removeDirectory,
   copyDirectoryContents,
   fileExists
@@ -39,7 +42,7 @@ export const GitClientLive = Layer.succeed(GitClient, {
   runGit,
   updateSubmodules: (workingDirectory: string) =>
     runGit(workingDirectory, "submodule", "sync", "--recursive").pipe(
-      Effect.flatMap(() => runGit(workingDirectory, "submodule", "update", "--init", "--recursive"))
+      Effect.flatMap(() => runGit(workingDirectory, "submodule", "update", "--init", "--recursive", "--remote"))
     )
 })
 

@@ -26,8 +26,19 @@ export class ProjectRegistryError extends Data.TaggedError("ProjectRegistryError
   readonly kind: string
 }> {}
 
+export class ProjectSourceMissingError extends Data.TaggedError("ProjectSourceMissingError")<{
+  readonly slug: string
+  readonly sourcePath: string
+}> {}
+
 export class EurekaSourceError extends Data.TaggedError("EurekaSourceError")<{
   readonly slug: string
+  readonly reason: string
+}> {}
+
+export class SourceNotesError extends Data.TaggedError("SourceNotesError")<{
+  readonly slug: string
+  readonly phase: string
   readonly reason: string
 }> {}
 
