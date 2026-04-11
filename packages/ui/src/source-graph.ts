@@ -1,25 +1,28 @@
-import { Context, Effect, Layer } from "effect"
+import { Context, Effect, Layer, Schema } from "effect"
+import { Browser, type Cleanup, combineCleanups } from "./browser"
 import { mountForceGraph } from "./source-graph-renderer"
 
-type SourceGraphNode = {
-  readonly id: string
-  readonly label: string
-  readonly url: string
-  readonly tree_path: string
-  readonly language: string
-}
+const SourceGraphNodeSchema = Schema.Struct({
+  id: Schema.String,
+  label: Schema.String,
+  url: Schema.String,
+  tree_path: Schema.String,
+  language: Schema.String
+})
 
-type SourceGraphEdge = {
-  readonly source: string
-  readonly target: string
-  readonly kind: "reference"
-}
+const SourceGraphEdgeSchema = Schema.Struct({
+  source: Schema.String,
+  target: Schema.String,
+  kind: Schema.Literal("reference")
+})
 
-type SourceProjectGraph = {
-  readonly project_slug: string
-  readonly nodes: ReadonlyArray<SourceGraphNode>
-  readonly edges: ReadonlyArray<SourceGraphEdge>
-}
+const SourceProjectGraphSchema = Schema.Struct({
+  project_slug: Schema.String,
+  nodes: Schema.Array(SourceGraphNodeSchema),
+  edges: Schema.Array(SourceGraphEdgeSchema)
+})
+
+type SourceProjectGraph = Schema.Schema.Type<typeof SourceProjectGraphSchema>
 
 type SourceGraphRenderInput = {
   readonly currentNodeId: string
@@ -33,10 +36,11 @@ type SourceGraphRenderInput = {
     readonly target: string
     readonly direction: "inbound" | "outbound"
   }>
+  readonly navigate: (url: string) => void
 }
 
 interface SourceGraphRendererService {
-  readonly mount: (container: HTMLDivElement, input: SourceGraphRenderInput) => Effect.Effect<() => void, never>
+  readonly mount: (container: HTMLDivElement, input: SourceGraphRenderInput) => Effect.Effect<Cleanup, never>
 }
 
 class SourceGraphRenderer extends Context.Tag("SourceGraphRenderer")<SourceGraphRenderer, SourceGraphRendererService>() {}
@@ -45,28 +49,38 @@ const SourceGraphRendererLive = Layer.succeed(SourceGraphRenderer, {
   mount: (container, input) => Effect.sync(() => mountForceGraph(container, input))
 })
 
-const decodePayload = (container: HTMLDivElement): SourceProjectGraph | null => {
-  const payload = container.querySelector<HTMLScriptElement>("script[data-source-graph-payload]")
-  if (!payload) {
-    return null
-  }
+const decodePayload = (container: HTMLDivElement) =>
+  Effect.gen(function* () {
+    const payload = container.querySelector<HTMLScriptElement>("script[data-source-graph-payload]")
+    if (!payload) {
+      return null
+    }
 
-  let graph: SourceProjectGraph | null = null
-  try {
-    graph = JSON.parse(payload.textContent ?? "") as SourceProjectGraph
-  } catch {
-    graph = null
-  }
-  payload.remove()
+    const graph = yield* Effect.sync(() => {
+      try {
+        return JSON.parse(payload.textContent ?? "") as unknown
+      } catch {
+        return null
+      }
+    }).pipe(
+      Effect.flatMap((value) =>
+        value === null
+          ? Effect.succeed(null)
+          : Schema.decodeUnknown(SourceProjectGraphSchema)(value).pipe(
+              Effect.catchAll(() => Effect.succeed(null))
+            )
+      )
+    )
 
-  if (!graph || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
-    return null
-  }
+    payload.remove()
+    return graph
+  })
 
-  return graph
-}
-
-const toRenderInput = (container: HTMLDivElement, graph: SourceProjectGraph): SourceGraphRenderInput | null => {
+const toRenderInput = (
+  container: HTMLDivElement,
+  graph: SourceProjectGraph,
+  navigate: (url: string) => void
+): SourceGraphRenderInput | null => {
   const currentNodeId = container.dataset.currentNode ?? ""
   const currentNode = graph.nodes.find((node) => node.id === currentNodeId)
   if (!currentNode) {
@@ -79,7 +93,6 @@ const toRenderInput = (container: HTMLDivElement, graph: SourceProjectGraph): So
     edge.source.startsWith(collectionPrefix) &&
     edge.target.startsWith(collectionPrefix)
   )
-
   if (relevantEdges.length === 0) {
     return null
   }
@@ -111,23 +124,25 @@ const toRenderInput = (container: HTMLDivElement, graph: SourceProjectGraph): So
       label: node.label,
       url: node.url
     })),
-    edges: scopedEdges
+    edges: scopedEdges,
+    navigate
   }
 }
 
 const mountContainer = (container: HTMLDivElement) =>
   Effect.gen(function* () {
+    const browser = yield* Browser
     if (container.dataset.graphReady === "true") {
       return null
     }
 
-    const graph = decodePayload(container)
+    const graph = yield* decodePayload(container)
     if (!graph || graph.nodes.length === 0) {
       container.remove()
       return null
     }
 
-    const input = toRenderInput(container, graph)
+    const input = toRenderInput(container, graph, (url) => browser.location.assign(url))
     if (!input) {
       container.remove()
       return null
@@ -142,20 +157,15 @@ const mountContainer = (container: HTMLDivElement) =>
   })
 
 export const initializeSourceGraphs = Effect.gen(function* () {
-  const containers = Array.from(document.querySelectorAll<HTMLDivElement>("[data-source-graph]"))
+  const browser = yield* Browser
+  const containers = Array.from(browser.document.querySelectorAll<HTMLDivElement>("[data-source-graph]"))
   if (containers.length === 0) {
-    return
+    return () => {}
   }
 
   const cleanups = yield* Effect.forEach(containers, (container) => mountContainer(container))
-  const activeCleanups = cleanups.filter((cleanup): cleanup is () => void => cleanup !== null)
-  if (activeCleanups.length === 0) {
-    return
-  }
-
-  window.addEventListener("pagehide", () => {
-    activeCleanups.forEach((cleanup) => cleanup())
-  }, { once: true })
+  const activeCleanups = cleanups.filter((cleanup): cleanup is Cleanup => cleanup !== null)
+  return combineCleanups(activeCleanups)
 }).pipe(
   Effect.provide(SourceGraphRendererLive)
 )

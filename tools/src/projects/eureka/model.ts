@@ -1,7 +1,7 @@
 import { Effect } from "effect"
 import path from "node:path"
-import yaml from "yaml"
 import { generatedSiteDirectory } from "../../core/paths.js"
+import { encodeFrontMatter } from "../../core/frontmatter.js"
 import { decodeYaml } from "../../core/yaml.js"
 import { EurekaSourceError } from "../../core/errors.js"
 import type { ProjectManifest } from "../schema.js"
@@ -65,8 +65,8 @@ const humanLabel = (value: string) =>
 
 const slugify = (value: string) => value.toLowerCase().replace(/[^a-z0-9_-]/g, "-")
 
-const problemFrontMatter = (manifest: ProjectManifest, slug: string, title: string, embed: boolean) => {
-  const payload = {
+const problemFrontMatter = (manifest: ProjectManifest, slug: string, title: string, embed: boolean) =>
+  encodeFrontMatter(`Unable to encode problem front matter for '${slug}'`, {
     layout: embed ? "problem_embed" : "problem",
     title,
     description: `${title} solutions`,
@@ -74,13 +74,10 @@ const problemFrontMatter = (manifest: ProjectManifest, slug: string, title: stri
     project_key: manifest.slug,
     permalink: embed ? `${manifest.route_base}/problems/${slug}/embed/` : `${manifest.route_base}/problems/${slug}/`,
     body_class: embed ? "" : "page-wide"
-  }
+  })
 
-  return `---\n${yaml.stringify(payload)}---\n`
-}
-
-const languageFrontMatter = (manifest: ProjectManifest, languageSlug: string, language: SourceLanguage) => {
-  const payload = {
+const languageFrontMatter = (manifest: ProjectManifest, languageSlug: string, language: SourceLanguage) =>
+  encodeFrontMatter(`Unable to encode language front matter for '${languageSlug}'`, {
     layout: "problems",
     title: `${language.label} Solutions`,
     description: `All LeetCode solutions in ${language.label}.`,
@@ -88,10 +85,7 @@ const languageFrontMatter = (manifest: ProjectManifest, languageSlug: string, la
     body_class: "page-wide",
     project_key: manifest.slug,
     language_filter: languageSlug
-  }
-
-  return `---\n${yaml.stringify(payload)}---\n`
-}
+  })
 
 const decodeProblem = (
   slug: string,
@@ -186,7 +180,8 @@ const buildProblemArtifacts = (
   slug: string,
   problem: ProblemSourceRecord,
   codes: Readonly<Record<string, string>>
-): ProblemArtifacts => {
+): Effect.Effect<ProblemArtifacts, Error> =>
+  Effect.gen(function* () {
   const implementations = languageEntries.flatMap(([languageSlug, language]) => {
     const sources = problem.implementations[languageSlug]
     if (!sources) {
@@ -247,15 +242,15 @@ const buildProblemArtifacts = (
     files: [
       {
         path: path.join(generatedSiteDirectory, manifest.slug, "problems", slug, "index.md"),
-        content: problemFrontMatter(manifest, slug, problem.name, false)
+        content: yield* problemFrontMatter(manifest, slug, problem.name, false)
       },
       {
         path: path.join(generatedSiteDirectory, manifest.slug, "problems", slug, "embed", "index.md"),
-        content: problemFrontMatter(manifest, slug, problem.name, true)
+        content: yield* problemFrontMatter(manifest, slug, problem.name, true)
       }
     ]
   }
-}
+  })
 
 export const buildEurekaModel = (
   manifest: ProjectManifest,
@@ -285,7 +280,7 @@ export const buildEurekaModel = (
       ).flat(2)
     )
 
-    const artifacts = problemEntries.map(([slug, problem]) =>
+    const artifacts = yield* Effect.forEach(problemEntries, ([slug, problem]) =>
       buildProblemArtifacts(manifest, languageEntries, slug, problem, codes)
     )
 
@@ -308,10 +303,14 @@ export const buildEurekaModel = (
     return {
       files: [
         ...artifacts.flatMap((artifact) => artifact.files),
-        ...languageEntries.map(([languageSlug, language]) => ({
-          path: path.join(generatedSiteDirectory, manifest.slug, languageSlug, "index.md"),
-          content: languageFrontMatter(manifest, languageSlug, language)
-        }))
+        ...(yield* Effect.forEach(languageEntries, ([languageSlug, language]) =>
+          languageFrontMatter(manifest, languageSlug, language).pipe(
+            Effect.map((content) => ({
+              path: path.join(generatedSiteDirectory, manifest.slug, languageSlug, "index.md"),
+              content
+            }))
+          )
+        ))
       ],
       problemPages,
       problemsView,

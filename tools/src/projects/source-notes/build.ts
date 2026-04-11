@@ -1,8 +1,8 @@
 import { Effect } from "effect"
 import path from "node:path"
-import yaml from "yaml"
 import { SourceNotesError } from "../../core/errors.js"
 import { generatedSiteDirectory, rootDirectory } from "../../core/paths.js"
+import { encodeFrontMatter } from "../../core/frontmatter.js"
 import { encodeYaml } from "../../core/yaml.js"
 import { FileStore, GitClient } from "../../core/workspace.js"
 import type { ProjectManifest } from "../schema.js"
@@ -92,8 +92,6 @@ const titleize = (value: string) =>
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ")
-
-const toFrontMatter = (payload: Record<string, unknown>) => `---\n${yaml.stringify(payload)}---\n`
 
 const buildCard = (manifest: ProjectManifest, sourceUrl: string): ProjectCard => ({
   slug: manifest.slug,
@@ -356,7 +354,7 @@ const buildModuleData = (
         Effect.flatMap((files) =>
           Effect.forEach(files, (filePath) =>
             fileStore.readText(filePath).pipe(
-              Effect.map((content) => {
+              Effect.flatMap((content) => {
                 const relativeToRoot = path.relative(root.absolutePath, filePath).split(path.sep).join("/")
                 const treePath = `${root.label}/${relativeToRoot}`
                 const extension = path.extname(filePath).toLowerCase()
@@ -379,38 +377,43 @@ const buildModuleData = (
                   breadcrumbs.push({ label: segment, url: "" })
                 })
 
-                return {
-                  metadata: {
-                    id: `${moduleCandidate.slug}:${treePath}`,
-                    graph_node_id: `${manifest.slug}:${moduleCandidate.slug}:${treePath}`,
+                return encodeFrontMatter(
+                  `Unable to encode source document front matter for '${sourcePath}'`,
+                  {
+                    layout: "source_document",
                     title: baseName,
-                    url,
+                    description: `${baseName} notes`,
+                    permalink: url,
+                    body_class: "page-wide",
+                    project_key: manifest.slug,
+                    module_slug: moduleCandidate.slug,
+                    document_id: `${moduleCandidate.slug}:${treePath}`,
+                    graph_node_id: `${manifest.slug}:${moduleCandidate.slug}:${treePath}`,
+                    page_source_url: sourceUrl,
                     tree_path: treePath,
                     source_path: sourcePath,
-                    source_url: sourceUrl,
-                    language: textFileMetadata[extension]?.language ?? root.language,
-                    format: textFileMetadata[extension]?.format ?? "code",
-                    breadcrumbs
-                  } satisfies SourceNotesDocument,
-                  file: {
-                    path: path.join(generatedSiteDirectory, manifest.slug, moduleCandidate.slug, routePath, "index.md"),
-                    content: `${toFrontMatter({
-                      layout: "source_document",
-                      title: baseName,
-                      description: `${baseName} notes`,
-                      permalink: url,
-                      body_class: "page-wide",
-                      project_key: manifest.slug,
-                      module_slug: moduleCandidate.slug,
-                      document_id: `${moduleCandidate.slug}:${treePath}`,
+                    source_url: sourceUrl
+                  }
+                ).pipe(
+                  Effect.map((frontMatter) => ({
+                    metadata: {
+                      id: `${moduleCandidate.slug}:${treePath}`,
                       graph_node_id: `${manifest.slug}:${moduleCandidate.slug}:${treePath}`,
-                      page_source_url: sourceUrl,
+                      title: baseName,
+                      url,
                       tree_path: treePath,
                       source_path: sourcePath,
-                      source_url: sourceUrl
-                    })}\n${buildDocumentBody(content, extension)}`
-                  } satisfies GeneratedTextFile
-                } satisfies BuiltDocument
+                      source_url: sourceUrl,
+                      language: textFileMetadata[extension]?.language ?? root.language,
+                      format: textFileMetadata[extension]?.format ?? "code",
+                      breadcrumbs
+                    } satisfies SourceNotesDocument,
+                    file: {
+                      path: path.join(generatedSiteDirectory, manifest.slug, moduleCandidate.slug, routePath, "index.md"),
+                      content: `${frontMatter}\n${buildDocumentBody(content, extension)}`
+                    } satisfies GeneratedTextFile
+                  } satisfies BuiltDocument))
+                )
               })
             )
           , { concurrency: 8 })
@@ -446,9 +449,9 @@ const buildModuleData = (
       documents: builtDocuments.map((document) => document.metadata)
     }
 
-    const modulePage = {
-      path: path.join(generatedSiteDirectory, manifest.slug, moduleCandidate.slug, "index.md"),
-      content: `${toFrontMatter({
+    const modulePageFrontMatter = yield* encodeFrontMatter(
+      `Unable to encode module front matter for '${moduleCandidate.slug}'`,
+      {
         layout: "source_module",
         title: moduleCandidate.title,
         description: `${moduleCandidate.title} notes`,
@@ -458,7 +461,12 @@ const buildModuleData = (
         module_slug: moduleCandidate.slug,
         page_source_url: moduleSourceUrl,
         tree_path: ""
-      })}\n${readme.markdown}\n`
+      }
+    )
+
+    const modulePage = {
+      path: path.join(generatedSiteDirectory, manifest.slug, moduleCandidate.slug, "index.md"),
+      content: `${modulePageFrontMatter}\n${readme.markdown}\n`
     } satisfies GeneratedTextFile
 
     return {

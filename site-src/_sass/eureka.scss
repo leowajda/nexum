@@ -1,3 +1,5 @@
+@use "ui";
+
 .problems-header,
 .problem-header {
   display: grid;
@@ -17,8 +19,7 @@
 
 .filter-group {
   padding: 1.1rem;
-  border: 1px solid currentColor;
-  background: rgba(0, 0, 0, 0.02);
+  @include ui.surface-card;
 }
 
 .filter-group__head {
@@ -90,18 +91,7 @@
 .language-tab,
 .approach-tab,
 .solution-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  min-height: 2.5rem;
-  padding: 0.45rem 0.85rem;
-  border: 1px solid currentColor;
-  background: white;
-  color: inherit;
-  font: inherit;
-  text-decoration: none;
-  cursor: pointer;
+  @include ui.interactive-control;
 }
 
 .filter-button:hover,
@@ -109,15 +99,13 @@
 .language-tab:hover,
 .approach-tab:hover,
 .solution-pill:hover {
-  background: black;
-  color: white;
+  @include ui.interactive-control-active;
 }
 
 .filter-chip.is-active,
 .language-tab.is-active,
 .approach-tab.is-active {
-  background: black;
-  color: white;
+  @include ui.interactive-control-active;
 }
 
 .filter-chip--all {
@@ -127,8 +115,7 @@
 }
 
 .filter-chip--all.is-active {
-  background: black;
-  color: white;
+  @include ui.interactive-control-active;
 }
 
 .filter-chips {
@@ -284,15 +271,7 @@
 }
 
 .solution-pill--icon {
-  min-width: 2.5rem;
-  padding: 0.45rem;
-  line-height: 0;
-  box-sizing: border-box;
-}
-
-.solution-pill--icon .icon {
-  width: 1.35rem;
-  height: 1.35rem;
+  @include ui.icon-control;
 }
 
 .solution-empty {
@@ -324,8 +303,7 @@
 .problem-viewer__frame {
   display: grid;
   gap: 0;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  background: rgba(255, 255, 255, 0.82);
+  @include ui.surface-card(rgba(255, 255, 255, 0.82), 1px solid rgba(0, 0, 0, 0.12));
   overflow: hidden;
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.03);
 }
@@ -375,19 +353,10 @@
 }
 
 .code-shell__panel-actions .link-button.icon-button {
-  min-width: 2.5rem;
-  min-height: 2.5rem;
-  padding: 0.45rem;
-  line-height: 0;
-  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-
-.code-shell__panel-actions .link-button.icon-button .icon {
-  width: 1.35rem;
-  height: 1.35rem;
+  @include ui.icon-control;
 }
 
 .code-shell {
@@ -448,13 +417,7 @@
 }
 
 .code-markdown .highlight pre {
-  margin: 0;
-  padding: 1rem 1.1rem;
-  overflow-x: auto;
-  background: #fcfcfc;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 0.65rem;
-  box-shadow: none;
+  @include ui.code-shell-block;
 }
 
 .code-markdown .highlight code {
@@ -470,70 +433,7 @@
   z-index: auto;
 }
 
-.code-markdown .highlight .c,
-.code-markdown .highlight .c1,
-.code-markdown .highlight .cm,
-.code-markdown .highlight .cp {
-  color: #6a737d;
-}
-
-.code-markdown .highlight .k,
-.code-markdown .highlight .kd,
-.code-markdown .highlight .kn,
-.code-markdown .highlight .kp,
-.code-markdown .highlight .kr {
-  color: #d73a49;
-}
-
-.code-markdown .highlight .kt,
-.code-markdown .highlight .nc,
-.code-markdown .highlight .nd {
-  color: #6f42c1;
-}
-
-.code-markdown .highlight .nf,
-.code-markdown .highlight .fm {
-  color: #005cc5;
-}
-
-.code-markdown .highlight .s,
-.code-markdown .highlight .sa,
-.code-markdown .highlight .sb,
-.code-markdown .highlight .sc,
-.code-markdown .highlight .dl,
-.code-markdown .highlight .sd,
-.code-markdown .highlight .s2,
-.code-markdown .highlight .sh,
-.code-markdown .highlight .si,
-.code-markdown .highlight .sr,
-.code-markdown .highlight .ss {
-  color: #032f62;
-}
-
-.code-markdown .highlight .m,
-.code-markdown .highlight .mb,
-.code-markdown .highlight .mf,
-.code-markdown .highlight .mh,
-.code-markdown .highlight .mi,
-.code-markdown .highlight .il {
-  color: #005cc5;
-}
-
-.code-markdown .highlight .o,
-.code-markdown .highlight .ow {
-  color: #d73a49;
-}
-
-.code-markdown .highlight .p {
-  color: inherit;
-}
-
-.code-markdown .highlight .na,
-.code-markdown .highlight .nb,
-.code-markdown .highlight .bp,
-.code-markdown .highlight .nv {
-  color: #24292e;
-}
+@include ui.code-token-colors(".code-markdown .highlight");
 
 @media (max-width: 768px) {
   .problem-table {

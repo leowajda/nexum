@@ -25,6 +25,7 @@ type RenderInput = {
   readonly currentNodeId: string
   readonly nodes: ReadonlyArray<SourceGraphNode>
   readonly edges: ReadonlyArray<SourceGraphEdge>
+  readonly navigate: (url: string) => void
 }
 
 type GraphNodeDatum = SimulationNodeDatum & {
@@ -436,7 +437,7 @@ export const mountForceGraph = (
     const onLeave = () => applyFocus(input.currentNodeId)
     const onClick = () => {
       if (node.url) {
-        window.location.assign(node.url)
+        input.navigate(node.url)
       }
     }
 

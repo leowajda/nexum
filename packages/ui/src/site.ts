@@ -1,5 +1,6 @@
 import renderMathInElement from "katex/contrib/auto-render"
 import { Effect } from "effect"
+import { Browser, BrowserLive, addEventListener, type Cleanup, combineCleanups } from "./browser"
 import { initializeEurekaUi } from "./eureka-controller"
 import { initializeSourceGraphs } from "./source-graph"
 
@@ -7,80 +8,84 @@ const themeStorageKey = "leowajda.github.io-theme"
 
 type Theme = "light" | "dark"
 
-const getStoredTheme = (): Theme | null => {
-  try {
-    const stored = window.localStorage.getItem(themeStorageKey)
-    return stored === "light" || stored === "dark" ? stored : null
-  } catch {
-    return null
-  }
-}
+const getStoredTheme = Effect.gen(function* () {
+  const browser = yield* Browser
+  const stored = browser.localStorage?.getItem(themeStorageKey)
+  return stored === "light" || stored === "dark" ? stored : null
+})
 
-const resolveTheme = (): Theme => {
-  const attribute = document.body.getAttribute("a") || "auto"
+const resolveTheme = Effect.gen(function* () {
+  const browser = yield* Browser
+  const attribute = browser.document.body.getAttribute("a") || "auto"
   if (attribute === "light" || attribute === "dark") {
     return attribute
   }
 
-  if (typeof window.matchMedia === "function") {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-  }
+  return typeof browser.window.matchMedia === "function" && browser.window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light"
+})
 
-  return "light"
-}
+const applyTheme = (theme: Theme) =>
+  Effect.gen(function* () {
+    const browser = yield* Browser
+    browser.document.body.setAttribute("a", theme)
+  })
 
-const applyTheme = (theme: Theme) => {
-  document.body.setAttribute("a", theme)
-}
+const updateThemeButton = (button: HTMLButtonElement) =>
+  Effect.gen(function* () {
+    const currentTheme = yield* resolveTheme
+    const nextTheme: Theme = currentTheme === "dark" ? "light" : "dark"
+    const icon = button.querySelector<SVGUseElement>(".theme-toggle__icon use")
 
-const updateThemeButton = (button: HTMLButtonElement) => {
-  const currentTheme = resolveTheme()
-  const nextTheme: Theme = currentTheme === "dark" ? "light" : "dark"
-  const icon = button.querySelector<SVGUseElement>(".theme-toggle__icon use")
-
-  if (icon) {
-    icon.setAttribute("href", `#icon-theme-${nextTheme}`)
-  }
-
-  button.setAttribute("aria-label", `Switch to ${nextTheme} mode`)
-  button.setAttribute("title", `Switch to ${nextTheme} mode`)
-}
-
-const initializeThemeToggle = () => {
-  const button = document.querySelector<HTMLButtonElement>("[data-theme-toggle]")
-  if (!button) {
-    return
-  }
-
-  updateThemeButton(button)
-
-  button.addEventListener("click", () => {
-    const nextTheme = resolveTheme() === "dark" ? "light" : "dark"
-    applyTheme(nextTheme)
-
-    try {
-      window.localStorage.setItem(themeStorageKey, nextTheme)
-    } catch {
-      // Ignore localStorage failures.
+    if (icon) {
+      icon.setAttribute("href", `#icon-theme-${nextTheme}`)
     }
 
-    updateThemeButton(button)
+    button.setAttribute("aria-label", `Switch to ${nextTheme} mode`)
+    button.setAttribute("title", `Switch to ${nextTheme} mode`)
   })
-}
 
-const initializeBackButton = () => {
-  const button = document.querySelector<HTMLButtonElement>("[data-back-button]")
+const initializeThemeToggle = Effect.gen(function* () {
+  const browser = yield* Browser
+  const button = browser.document.querySelector<HTMLButtonElement>("[data-theme-toggle]")
   if (!button) {
-    return
+    return () => {}
+  }
+
+  yield* updateThemeButton(button)
+  return yield* addEventListener(button, "click", () => {
+    Effect.runSync(
+      Effect.gen(function* () {
+        const nextTheme = (yield* resolveTheme) === "dark" ? "light" : "dark"
+        yield* applyTheme(nextTheme)
+        browser.localStorage?.setItem(themeStorageKey, nextTheme)
+        yield* updateThemeButton(button)
+      }).pipe(
+        Effect.catchAllCause((cause) =>
+          Effect.sync(() => {
+            browser.console.error("Failed to update theme", cause)
+          })
+        )
+      ).pipe(Effect.provideService(Browser, browser))
+    )
+  })
+})
+
+const initializeBackButton = Effect.gen(function* () {
+  const browser = yield* Browser
+  const button = browser.document.querySelector<HTMLButtonElement>("[data-back-button]")
+  if (!button) {
+    return () => {}
   }
 
   let referrerUrl: URL | null = null
 
   try {
-    const referrer = document.referrer
+    const referrer = browser.document.referrer
     if (referrer) {
       const parsed = new URL(referrer)
-      if (parsed.origin === window.location.origin) {
+      if (parsed.origin === browser.location.origin) {
         referrerUrl = parsed
       }
     }
@@ -90,22 +95,29 @@ const initializeBackButton = () => {
 
   if (!referrerUrl) {
     button.hidden = true
-    return
+    return () => {}
   }
 
   button.hidden = false
   button.setAttribute("aria-label", "Back to previous page")
   button.setAttribute("title", "Back to previous page")
-  button.addEventListener("click", () => {
-    window.history.back()
+  return yield* addEventListener(button, "click", () => {
+    browser.history.back()
   })
+})
+
+const resetCopyButtonLabel = (button: HTMLButtonElement, label: string) => {
+  button.setAttribute("title", label)
+  button.setAttribute("aria-label", label)
 }
 
-const initializeCopyButtons = () => {
-  const buttons = document.querySelectorAll<HTMLButtonElement>("[data-code-copy-button]")
-  buttons.forEach((button) => {
+const initializeCopyButtons = Effect.gen(function* () {
+  const browser = yield* Browser
+  const cleanups: Array<Cleanup> = []
+
+  for (const button of browser.document.querySelectorAll<HTMLButtonElement>("[data-code-copy-button]")) {
     if (button.dataset.copyReady === "true") {
-      return
+      continue
     }
     button.dataset.copyReady = "true"
 
@@ -126,48 +138,39 @@ const initializeCopyButtons = () => {
       return fallback ? fallback.innerText : ""
     }
 
-    button.addEventListener("click", () => {
+    cleanups.push(yield* addEventListener(button, "click", () => {
       const codeText = findCodeText()
-      if (!codeText) {
-        button.setAttribute("title", "Copy failed")
-        button.setAttribute("aria-label", "Copy failed")
-        window.setTimeout(() => {
-          button.setAttribute("title", "Copy code")
-          button.setAttribute("aria-label", "Copy code")
-        }, 1200)
+      if (!codeText || !browser.navigator.clipboard) {
+        resetCopyButtonLabel(button, "Copy failed")
+        browser.window.setTimeout(() => resetCopyButtonLabel(button, "Copy code"), 1200)
         return
       }
 
-      void navigator.clipboard.writeText(codeText)
+      void browser.navigator.clipboard.writeText(codeText)
         .then(() => {
-          button.setAttribute("title", "Copied")
-          button.setAttribute("aria-label", "Copied")
-          window.setTimeout(() => {
-            button.setAttribute("title", "Copy code")
-            button.setAttribute("aria-label", "Copy code")
-          }, 1200)
+          resetCopyButtonLabel(button, "Copied")
+          browser.window.setTimeout(() => resetCopyButtonLabel(button, "Copy code"), 1200)
         })
         .catch(() => {
-          button.setAttribute("title", "Copy failed")
-          button.setAttribute("aria-label", "Copy failed")
-          window.setTimeout(() => {
-            button.setAttribute("title", "Copy code")
-            button.setAttribute("aria-label", "Copy code")
-          }, 1200)
+          resetCopyButtonLabel(button, "Copy failed")
+          browser.window.setTimeout(() => resetCopyButtonLabel(button, "Copy code"), 1200)
         })
-    })
-  })
-}
+    }))
+  }
 
-const initializeSourceSidebar = () => {
-  const sidebar = document.querySelector<HTMLElement>(".source-sidebar")
+  return combineCleanups(cleanups)
+})
+
+const initializeSourceSidebar = Effect.gen(function* () {
+  const browser = yield* Browser
+  const sidebar = browser.document.querySelector<HTMLElement>(".source-sidebar")
   if (!sidebar) {
-    return
+    return () => {}
   }
 
   const activeLink = sidebar.querySelector<HTMLElement>(".source-tree__link.is-active")
   if (!activeLink) {
-    return
+    return () => {}
   }
 
   const groups = Array.from(sidebar.querySelectorAll<HTMLDetailsElement>(".source-tree__group"))
@@ -187,10 +190,13 @@ const initializeSourceSidebar = () => {
     block: "center",
     inline: "nearest"
   })
-}
 
-const initializeMath = () => {
-  renderMathInElement(document.body, {
+  return () => {}
+})
+
+const initializeMath = Effect.gen(function* () {
+  const browser = yield* Browser
+  renderMathInElement(browser.document.body, {
     delimiters: [
       { left: "$$", right: "$$", display: true },
       { left: "\\[", right: "\\]", display: true },
@@ -200,48 +206,50 @@ const initializeMath = () => {
     throwOnError: false,
     ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"]
   })
-}
 
-const runSafely = (label: string, effect: () => void) => {
-  try {
-    effect()
-  } catch (error) {
-    console.error(`Failed to initialize ${label}`, error)
-  }
-}
+  return () => {}
+})
 
-const runEffectSafely = (label: string, effect: Effect.Effect<void, never>) => {
-  Effect.runSync(
-    Effect.catchAllCause(effect, (cause) =>
-      Effect.sync(() => {
-        console.error(`Failed to initialize ${label}`, cause)
-      })
+const initializeSafely = (label: string, effect: Effect.Effect<Cleanup, unknown, Browser>) =>
+  Effect.gen(function* () {
+    const browser = yield* Browser
+    return yield* effect.pipe(
+      Effect.catchAllCause((cause) =>
+        Effect.sync(() => {
+          browser.console.error(`Failed to initialize ${label}`, cause)
+          return () => {}
+        })
+      )
     )
-  )
-}
+  })
 
-const start = () => {
-  const storedTheme = getStoredTheme()
+const start = Effect.gen(function* () {
+  const browser = yield* Browser
+  const storedTheme = yield* getStoredTheme
   if (storedTheme) {
-    applyTheme(storedTheme)
+    yield* applyTheme(storedTheme)
   }
 
-  runSafely("theme toggle", initializeThemeToggle)
-  runSafely("back button", initializeBackButton)
-  runSafely("copy buttons", initializeCopyButtons)
-  runSafely("source sidebar", initializeSourceSidebar)
-  runSafely("math rendering", initializeMath)
-  runEffectSafely("source graphs", initializeSourceGraphs)
+  const cleanups = yield* Effect.all([
+    initializeSafely("theme toggle", initializeThemeToggle),
+    initializeSafely("back button", initializeBackButton),
+    initializeSafely("copy buttons", initializeCopyButtons),
+    initializeSafely("source sidebar", initializeSourceSidebar),
+    initializeSafely("math rendering", initializeMath),
+    initializeSafely("source graphs", initializeSourceGraphs),
+    initializeSafely("Eureka UI", initializeEurekaUi)
+  ])
 
-  try {
-    initializeEurekaUi()
-  } catch (error) {
-    console.error("Failed to initialize Eureka UI", error)
-  }
-}
+  const cleanup = combineCleanups(cleanups)
+  yield* addEventListener(browser.window, "pagehide", cleanup, { once: true })
+})
+
+const program = start.pipe(Effect.provide(BrowserLive))
 
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", start, { once: true })
+  document.addEventListener("DOMContentLoaded", () => {
+    Effect.runSync(program)
+  }, { once: true })
 } else {
-  start()
+  Effect.runSync(program)
 }
