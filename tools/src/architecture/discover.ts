@@ -1,10 +1,17 @@
 import { Effect } from "effect"
 import path from "node:path"
 import { ArchitectureDiscoveryError } from "../core/errors.js"
-import { rootDirectory, projectsDirectory } from "../core/paths.js"
+import { projectsDirectory, rootDirectory } from "../core/paths.js"
 import { decodeYaml } from "../core/yaml.js"
 import { FileStore } from "../core/workspace.js"
 import { ProjectManifestSchema, type ProjectManifest } from "../projects/schema.js"
+import {
+  classifyTrackedPath,
+  generatedSiteNode,
+  makeManifestNode,
+  makeSourceNode,
+  renderedSiteNode
+} from "./catalog.js"
 import type { ArchitectureEdge, ArchitectureGraph, ArchitectureNode } from "./schema.js"
 
 type DiscoveredFile = {
@@ -19,16 +26,19 @@ const architectureRoots = [
   "site-src"
 ] as const
 
-const architectureExtensions = new Set([".ts", ".tsx", ".js", ".jsx", ".scss", ".css", ".html", ".md", ".yml"])
+const trackedExtensions = new Set([".ts", ".tsx", ".js", ".jsx", ".scss", ".css", ".html", ".md", ".yml"])
 
-const pathExists = (value: string) => Effect.tryPromise({
-  try: async () => {
-    const fs = await import("node:fs/promises")
-    await fs.access(value)
-    return true
-  },
-  catch: () => false
-})
+const relativeImportPattern = /from\s+["'](\.[^"']+)["']|import\s*\(["'](\.[^"']+)["']\)/g
+
+const pathExists = (value: string) =>
+  Effect.tryPromise({
+    try: async () => {
+      const fs = await import("node:fs/promises")
+      await fs.access(value)
+      return true
+    },
+    catch: () => false
+  })
 
 const readTree = (directory: string): Effect.Effect<ReadonlyArray<DiscoveredFile>, Error, FileStore> =>
   Effect.gen(function* () {
@@ -40,7 +50,7 @@ const readTree = (directory: string): Effect.Effect<ReadonlyArray<DiscoveredFile
         return readTree(absolutePath)
       }
 
-      return architectureExtensions.has(path.extname(entry.name))
+      return trackedExtensions.has(path.extname(entry.name))
         ? Effect.succeed([{ absolutePath, relativePath: path.relative(rootDirectory, absolutePath) }] as const)
         : Effect.succeed([] as const)
     }, { concurrency: 8 })
@@ -59,65 +69,6 @@ const loadProjectManifests = Effect.gen(function* () {
     )
   )
 })
-
-const relativeImportPattern = /from\s+["'](\.[^"']+)["']|import\s*\(["'](\.[^"']+)["']\)/g
-
-const toModuleId = (relativePath: string): string => {
-  if (relativePath === "tools/src/main.ts") {
-    return "cli"
-  }
-  if (relativePath.startsWith("tools/src/core/")) {
-    return "tools-core"
-  }
-  if (relativePath.startsWith("tools/src/architecture/")) {
-    return "tools-architecture"
-  }
-  if (relativePath.startsWith("tools/src/programs/")) {
-    return "tools-programs"
-  }
-  if (relativePath.startsWith("tools/src/projects/")) {
-    const parts = relativePath.split("/")
-    return parts.length >= 5 ? `project-${parts[3]}` : "tools-projects"
-  }
-  if (relativePath.startsWith("packages/ui/")) {
-    return "package-ui"
-  }
-  if (relativePath.startsWith("packages/theme/")) {
-    return "package-theme"
-  }
-  if (relativePath.startsWith("site-src/")) {
-    return "site-src"
-  }
-  return "misc"
-}
-
-const moduleLabel = (moduleId: string, manifests: ReadonlyArray<ProjectManifest>): string => {
-  if (moduleId === "cli") return "CLI"
-  if (moduleId === "tools-core") return "tools/core"
-  if (moduleId === "tools-architecture") return "tools/architecture"
-  if (moduleId === "tools-programs") return "tools/programs"
-  if (moduleId === "tools-projects") return "tools/projects"
-  if (moduleId === "package-ui") return "packages/ui"
-  if (moduleId === "package-theme") return "packages/theme"
-  if (moduleId === "site-src") return "site-src"
-  if (moduleId.startsWith("project-")) {
-    const slug = moduleId.replace(/^project-/, "")
-    const manifest = manifests.find((entry) => entry.slug === slug || entry.kind === slug)
-    return manifest ? `project:${manifest.slug}` : moduleId
-  }
-  if (moduleId.startsWith("manifest-")) return moduleId.replace(/^manifest-/, "")
-  if (moduleId.startsWith("source-")) return moduleId.replace(/^source-/, "")
-  return moduleId
-}
-
-const moduleGroup = (moduleId: string): string => {
-  if (moduleId === "cli" || moduleId.startsWith("tools-") || moduleId.startsWith("project-")) return "Tools"
-  if (moduleId.startsWith("manifest-")) return "Project Manifests"
-  if (moduleId.startsWith("source-")) return "Source Repos"
-  if (moduleId === "package-ui" || moduleId === "package-theme") return "Packages"
-  if (moduleId === "site-src" || moduleId === "generated-site" || moduleId === "rendered-site") return "Site"
-  return "Other"
-}
 
 const resolveImportTarget = async (fromPath: string, specifier: string): Promise<string | null> => {
   const fs = await import("node:fs/promises")
@@ -150,10 +101,17 @@ const resolveImportTarget = async (fromPath: string, specifier: string): Promise
   return null
 }
 
-const discoverImportEdges = (files: ReadonlyArray<DiscoveredFile>) =>
+const dedupeBy = <A>(values: ReadonlyArray<A>, keyOf: (value: A) => string): ReadonlyArray<A> =>
+  Array.from(new Map(values.map((value) => [keyOf(value), value])).values())
+
+const discoverImportEdges = (
+  files: ReadonlyArray<DiscoveredFile>,
+  manifests: ReadonlyArray<ProjectManifest>
+): Effect.Effect<ReadonlyArray<ArchitectureEdge>, Error, FileStore> =>
   Effect.gen(function* () {
     const fileStore = yield* FileStore
     const knownFiles = new Set(files.map((file) => file.relativePath))
+
     const rawEdges = yield* Effect.forEach(files, (file) =>
       fileStore.readText(file.absolutePath).pipe(
         Effect.flatMap((content) =>
@@ -168,91 +126,81 @@ const discoverImportEdges = (files: ReadonlyArray<DiscoveredFile>) =>
               .filter((target): target is string => typeof target === "string")
               .filter((target) => knownFiles.has(target))
               .map((target) => ({
-                from: toModuleId(file.relativePath),
-                to: toModuleId(target),
-                label: "imports"
+                from: classifyTrackedPath(file.relativePath, manifests).id,
+                to: classifyTrackedPath(target, manifests).id,
+                label: "imports",
+                kind: "dependency" as const
               }))
           })
         )
       ),
-    { concurrency: 8 }).pipe(Effect.map((entries) => entries.flat()))
+    { concurrency: 8 })
 
-    return Array.from(new Map(rawEdges.filter((edge) => edge.from !== edge.to).map((edge) => [`${edge.from}:${edge.to}:${edge.label}`, edge])).values())
+    return dedupeBy(rawEdges.flat().filter((edge) => edge.from !== edge.to), (edge) => `${edge.from}:${edge.to}:${edge.label}:${edge.kind}`)
   })
 
-const makeStaticEdges = (manifests: ReadonlyArray<ProjectManifest>): ReadonlyArray<ArchitectureEdge> => [
-  { from: "cli", to: "tools-programs", label: "dispatches" },
-  { from: "tools-programs", to: "tools-core", label: "uses" },
-  { from: "tools-programs", to: "tools-architecture", label: "refreshes docs with" },
-  { from: "tools-programs", to: "tools-projects", label: "loads" },
-  { from: "package-theme", to: "generated-site", label: "copies into" },
-  { from: "site-src", to: "generated-site", label: "copies into" },
-  { from: "package-ui", to: "generated-site", label: "bundles into" },
-  { from: "generated-site", to: "rendered-site", label: "builds" },
+const makeFlowEdges = (manifests: ReadonlyArray<ProjectManifest>): ReadonlyArray<ArchitectureEdge> => [
+  { from: "cli", to: "tools-programs", label: "dispatches", kind: "flow" },
+  { from: "tools-programs", to: "tools-core", label: "uses", kind: "flow" },
+  { from: "tools-programs", to: "tools-architecture", label: "refreshes docs with", kind: "flow" },
+  { from: "tools-programs", to: "tools-projects", label: "loads", kind: "flow" },
+  { from: "package-theme", to: "generated-site", label: "copies into", kind: "flow" },
+  { from: "site-src", to: "generated-site", label: "copies into", kind: "flow" },
+  { from: "package-ui", to: "generated-site", label: "bundles into", kind: "flow" },
+  { from: "generated-site", to: "rendered-site", label: "builds", kind: "flow" },
   ...manifests.flatMap((manifest) => {
-    const projectNode = `project-${manifest.slug}`
-    const manifestNode = `manifest-${manifest.slug}`
-    const sourceNode = `source-${manifest.slug}`
+    const projectId = `project-${manifest.slug}`
+    const manifestId = `manifest-${manifest.slug}`
+    const sourceId = `source-${manifest.slug}`
 
     return [
-      { from: manifestNode, to: sourceNode, label: "points to" },
-      { from: manifestNode, to: projectNode, label: "configures" },
-      { from: sourceNode, to: projectNode, label: "feeds" },
-      { from: projectNode, to: "generated-site", label: "emits pages/data" }
+      { from: manifestId, to: sourceId, label: "points to", kind: "flow" as const },
+      { from: manifestId, to: projectId, label: "configures", kind: "flow" as const },
+      { from: sourceId, to: projectId, label: "feeds", kind: "flow" as const },
+      { from: projectId, to: "generated-site", label: "emits pages/data", kind: "flow" as const }
     ]
   })
 ]
 
-const makeNodes = (files: ReadonlyArray<DiscoveredFile>, manifests: ReadonlyArray<ProjectManifest>): ReadonlyArray<ArchitectureNode> => {
-  const fileCounts = new Map<string, number>()
-  files.forEach((file) => {
-    const moduleId = toModuleId(file.relativePath)
-    fileCounts.set(moduleId, (fileCounts.get(moduleId) ?? 0) + 1)
-  })
+const makeDiscoveredNodes = (
+  files: ReadonlyArray<DiscoveredFile>,
+  manifests: ReadonlyArray<ProjectManifest>
+): ReadonlyArray<ArchitectureNode> => {
+  const counts = new Map<string, { readonly node: ArchitectureNode; count: number }>()
 
-  const dynamicProjectNodes = manifests.flatMap((manifest) => [
-    {
-      id: `manifest-${manifest.slug}`,
-      label: `manifest:${manifest.slug}`,
-      group: "Project Manifests",
-      detail: `projects/${manifest.slug}.yml`
-    },
-    {
-      id: `source-${manifest.slug}`,
-      label: `source:${manifest.slug}`,
-      group: "Source Repos",
-      detail: manifest.source_repo_path
-    }
-  ])
+  for (const file of files) {
+    const node = classifyTrackedPath(file.relativePath, manifests)
+    const existing = counts.get(node.id)
+    counts.set(node.id, existing ? { node: existing.node, count: existing.count + 1 } : { node, count: 1 })
+  }
 
-  const discoveredNodes = Array.from(fileCounts.entries()).map(([id, count]) => ({
-    id,
-    label: moduleLabel(id, manifests),
-    group: moduleGroup(id),
-    detail: `${count} tracked file${count === 1 ? "" : "s"}`
+  return Array.from(counts.values()).map(({ node, count }) => ({
+    ...node,
+    detail: `${node.detail} · ${count} tracked file${count === 1 ? "" : "s"}`
   }))
-
-  return [
-    ...discoveredNodes,
-    ...dynamicProjectNodes,
-    { id: "generated-site", label: "generated site", group: "Site", detail: "site/" },
-    { id: "rendered-site", label: "rendered site", group: "Site", detail: "_site/" }
-  ]
 }
 
+const makeDynamicNodes = (manifests: ReadonlyArray<ProjectManifest>): ReadonlyArray<ArchitectureNode> => [
+  ...manifests.flatMap((manifest) => [makeManifestNode(manifest), makeSourceNode(manifest)]),
+  generatedSiteNode,
+  renderedSiteNode
+]
+
 export const discoverArchitectureGraph = Effect.gen(function* () {
-  const fileStore = yield* FileStore
   const manifests = yield* loadProjectManifests
-  const rootEntries = yield* Effect.forEach(architectureRoots, (relativePath) => {
+  const discoveredTrees = yield* Effect.forEach(architectureRoots, (relativePath) => {
     const absolutePath = path.join(rootDirectory, relativePath)
     return pathExists(absolutePath).pipe(
       Effect.flatMap((exists) => exists ? readTree(absolutePath) : Effect.succeed([]))
     )
   }, { concurrency: 4 })
-  const files = rootEntries.flat()
-  const nodes = makeNodes(files, manifests)
-  const importEdges = yield* discoverImportEdges(files)
-  const edges = Array.from(new Map([...makeStaticEdges(manifests), ...importEdges].map((edge) => [`${edge.from}:${edge.to}:${edge.label}`, edge])).values())
+
+  const files = discoveredTrees.flat()
+  const nodes = dedupeBy([...makeDiscoveredNodes(files, manifests), ...makeDynamicNodes(manifests)], (node) => node.id)
+  const edges = dedupeBy(
+    [...makeFlowEdges(manifests), ...(yield* discoverImportEdges(files, manifests))],
+    (edge) => `${edge.from}:${edge.to}:${edge.label}:${edge.kind}`
+  )
 
   if (!nodes.length) {
     return yield* Effect.fail(new ArchitectureDiscoveryError({ reason: "No architecture nodes were discovered" }))
