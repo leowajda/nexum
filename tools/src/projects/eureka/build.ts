@@ -7,8 +7,9 @@ import { resolveRepositoryMetadata } from "../../core/repository.js"
 import type { ProjectManifest } from "../schema.js"
 import type { GeneratedTextFile, ProjectAdapter, ProjectBuild, ProjectCard } from "../types.js"
 import { buildEurekaModel, decodeEurekaSource } from "./model.js"
-import { buildEurekaReferencePanels, localSourcePath } from "./references.js"
+import { buildEurekaReferencePanels } from "./references.js"
 import { ProblemFiltersSchema, ProblemPagesSchema, ProblemsViewSchema } from "./schema.js"
+import { localSourcePath } from "./workspaces.js"
 
 const slugify = (value: string) => value.toLowerCase().replace(/[^a-z0-9_-]/g, "-")
 
