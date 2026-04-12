@@ -10,6 +10,44 @@ import {
   type ProblemRowModel
 } from "./eureka-model"
 
+type ProblemTableState = {
+  readonly search: string
+  readonly difficulty: string
+  readonly categories: ReadonlySet<string>
+  readonly language: string
+}
+
+const createProblemTableState = (language: string): ProblemTableState => ({
+  search: "",
+  difficulty: "",
+  categories: new Set<string>(),
+  language
+})
+
+const toggleSingleSelect = (currentValue: string, nextValue: string) =>
+  currentValue === nextValue ? "" : nextValue
+
+const toggleCategory = (categories: ReadonlySet<string>, value: string): ReadonlySet<string> => {
+  if (value === "") {
+    return new Set<string>()
+  }
+
+  const nextCategories = new Set(categories)
+  if (nextCategories.has(value)) {
+    nextCategories.delete(value)
+    return nextCategories
+  }
+
+  nextCategories.add(value)
+  return nextCategories
+}
+
+const matchesProblemRow = (state: ProblemTableState, row: ProblemRowModel) =>
+  (!state.search || row.searchTitle.includes(state.search))
+  && (!state.difficulty || row.difficulty === state.difficulty)
+  && (!state.language || row.languages.includes(state.language))
+  && (state.categories.size === 0 || row.categories.some((category) => state.categories.has(category)))
+
 const initializeProblemTable = Effect.gen(function* () {
   const browser = yield* Browser
   const table = browser.document.getElementById("problem-table")
@@ -31,12 +69,8 @@ const initializeProblemTable = Effect.gen(function* () {
     Array.from(table.querySelectorAll<HTMLElement>("[data-problem-row]")),
     decodeProblemRow
   )
-  const state = {
-    search: "",
-    difficulty: "",
-    categories: new Set<string>(),
-    language: table.dataset.languageFilter || ""
-  }
+  const defaultLanguage = table.dataset.languageFilter || ""
+  let state = createProblemTableState(defaultLanguage)
 
   const syncSingleSelectButtons = (kind: Exclude<FilterKind, "clear" | "category">, activeValue: string) => {
     filterButtons.forEach((button) => {
@@ -79,12 +113,7 @@ const initializeProblemTable = Effect.gen(function* () {
     let visibleCount = 0
 
     rows.forEach((row) => {
-      const matchesSearch = !state.search || row.searchTitle.includes(state.search)
-      const matchesDifficulty = !state.difficulty || row.difficulty === state.difficulty
-      const matchesLanguage = !state.language || row.languages.includes(state.language)
-      const matchesCategory = state.categories.size === 0 || row.categories.some((category) => state.categories.has(category))
-      const matches = Boolean(matchesSearch && matchesDifficulty && matchesLanguage && matchesCategory)
-
+      const matches = matchesProblemRow(state, row)
       row.element.hidden = !matches
       if (matches) {
         visibleCount += 1
@@ -104,7 +133,10 @@ const initializeProblemTable = Effect.gen(function* () {
 
   if (searchInput) {
     cleanups.push(yield* addEventListener(searchInput, "input", () => {
-      state.search = searchInput.value.trim().toLowerCase()
+      state = {
+        ...state,
+        search: searchInput.value.trim().toLowerCase()
+      }
       render()
     }))
   }
@@ -114,10 +146,7 @@ const initializeProblemTable = Effect.gen(function* () {
       const { kind, value } = button
 
       if (kind === "clear") {
-        state.search = ""
-        state.difficulty = ""
-        state.categories = new Set<string>()
-        state.language = table.dataset.languageFilter || ""
+        state = createProblemTableState(defaultLanguage)
 
         if (searchInput) {
           searchInput.value = ""
@@ -130,17 +159,16 @@ const initializeProblemTable = Effect.gen(function* () {
       }
 
       if (kind === "category") {
-        if (value === "") {
-          state.categories = new Set<string>()
-        } else if (state.categories.has(value)) {
-          state.categories.delete(value)
-        } else {
-          state.categories.add(value)
+        state = {
+          ...state,
+          categories: toggleCategory(state.categories, value)
         }
-
         syncCategoryButtons()
       } else if (kind === "difficulty" || kind === "language") {
-        state[kind] = state[kind] === value ? "" : value
+        state = {
+          ...state,
+          [kind]: toggleSingleSelect(state[kind], value)
+        }
         syncSingleSelectButtons(kind, state[kind])
       }
 
