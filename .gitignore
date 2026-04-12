@@ -10,5 +10,6 @@ __pycache__/
 site/
 _site/
 .cache/
+.playwright-cli/
 
 .DS_Store
