@@ -27,3 +27,4 @@
 
 ## Rule
 - Debug rendered pages, not raw templates
+- Use conventional commit messages: `type(scope): subject`
