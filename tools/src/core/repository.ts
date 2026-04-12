@@ -1,5 +1,4 @@
 import { Effect } from "effect"
-import path from "node:path"
 import { GitClient } from "./workspace.js"
 
 export type RepositoryMetadata = {
@@ -15,7 +14,7 @@ export const normalizeRemoteUrl = (remoteUrl: string) => {
   return remoteUrl.replace(/\.git$/, "")
 }
 
-export const toPosixPath = (value: string) => value.split(path.sep).join("/")
+export const toPosixPath = (value: string) => value.replaceAll("\\", "/")
 
 export const resolveRepositoryMetadata = (repoRoot: string): Effect.Effect<RepositoryMetadata, Error, GitClient> =>
   Effect.gen(function* () {
