@@ -1,30 +1,17 @@
 import { Effect } from "effect"
 import path from "node:path"
 import { SourceNotesError } from "../../core/errors.js"
-import { generatedSiteDirectory, rootDirectory } from "../../core/paths.js"
-import { encodeYaml } from "../../core/yaml.js"
+import { rootDirectory } from "../../core/paths.js"
 import { resolveRepositoryMetadata } from "../../core/repository.js"
 import type { ProjectManifest } from "../schema.js"
-import type { GeneratedTextFile, ProjectAdapter, ProjectBuild, ProjectCard } from "../types.js"
+import type { ProjectAdapter } from "../types.js"
 import { buildSourceNotesReferencePanels } from "./graph.js"
 import { maybeReadText, rewriteMarkdownAssets } from "./assets.js"
 import {
-  discoverModuleCandidates,
-  type ModuleCandidate
+  discoverModuleCandidates
 } from "./discovery.js"
-import { buildSourceNotesModule, type BuiltModule } from "./module-builder.js"
-import {
-  SourceNotesProjectDataSchema,
-  type SourceNotesProjectData
-} from "./schema.js"
-
-const buildCard = (manifest: ProjectManifest, sourceUrl: string): ProjectCard => ({
-  slug: manifest.slug,
-  title: manifest.title,
-  description: manifest.description,
-  url: `${manifest.route_base}/`,
-  source_url: sourceUrl
-})
+import { buildSourceNotesModule } from "./module-builder.js"
+import { assembleSourceNotesProject } from "./project-output.js"
 
 const buildSourceNotes = (manifest: ProjectManifest) =>
   Effect.gen(function* () {
@@ -55,45 +42,14 @@ const buildSourceNotes = (manifest: ProjectManifest) =>
         documents: module.module.documents
       }))
     )
-    const modulesWithReferences = builtModules.map((module) => ({
-      ...module,
-      module: {
-        ...module.module,
-        documents: module.module.documents.map((document) => ({
-          ...document,
-          code_references: document.format === "code" ? (referencePanels.get(document.id) ?? null) : null
-        }))
-      }
-    }))
 
-    const projectData: SourceNotesProjectData = {
-      project: {
-        slug: manifest.slug,
-        title: manifest.title,
-        description: manifest.description,
-        url: `${manifest.route_base}/`,
-        source_url: gitMetadata.sourceUrl,
-        hero_image_url: repoReadme.firstImageUrl
-      },
-      modules: modulesWithReferences.map((module) => module.module)
-    }
-
-    const dataFile = yield* encodeYaml(
-      `Unable to encode generated source notes for '${manifest.slug}'`,
-      SourceNotesProjectDataSchema,
-      projectData
-    ).pipe(
-      Effect.map((content) => ({
-        path: path.join(generatedSiteDirectory, `_data/generated/${manifest.slug}/source_notes.yml`),
-        content
-      } satisfies GeneratedTextFile))
+    return yield* assembleSourceNotesProject(
+      manifest,
+      gitMetadata.sourceUrl,
+      repoReadme,
+      builtModules,
+      referencePanels
     )
-
-    return {
-      card: buildCard(manifest, gitMetadata.sourceUrl),
-      files: [dataFile, ...modulesWithReferences.flatMap((module) => module.files)],
-      assets: [...repoReadme.assets, ...modulesWithReferences.flatMap((module) => module.assets)]
-    } satisfies ProjectBuild
   })
 
 export const sourceNotesProjectAdapter: ProjectAdapter = {
