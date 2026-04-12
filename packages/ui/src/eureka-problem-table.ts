@@ -3,47 +3,15 @@ import { Browser, addEventListener, type Cleanup, combineCleanups } from "./brow
 import {
   decodeFilterButton,
   decodeProblemRow,
-  type FilterKind,
-  type ProblemRowModel
+  type FilterKind
 } from "./eureka-model"
-
-type ProblemTableState = {
-  readonly search: string
-  readonly difficulty: string
-  readonly categories: ReadonlySet<string>
-  readonly language: string
-}
-
-const createProblemTableState = (language: string): ProblemTableState => ({
-  search: "",
-  difficulty: "",
-  categories: new Set<string>(),
-  language
-})
-
-const toggleSingleSelect = (currentValue: string, nextValue: string) =>
-  currentValue === nextValue ? "" : nextValue
-
-const toggleCategory = (categories: ReadonlySet<string>, value: string): ReadonlySet<string> => {
-  if (value === "") {
-    return new Set<string>()
-  }
-
-  const nextCategories = new Set(categories)
-  if (nextCategories.has(value)) {
-    nextCategories.delete(value)
-    return nextCategories
-  }
-
-  nextCategories.add(value)
-  return nextCategories
-}
-
-const matchesProblemRow = (state: ProblemTableState, row: ProblemRowModel) =>
-  (!state.search || row.searchTitle.includes(state.search))
-  && (!state.difficulty || row.difficulty === state.difficulty)
-  && (!state.language || row.languages.includes(state.language))
-  && (state.categories.size === 0 || row.categories.some((category) => state.categories.has(category)))
+import {
+  createProblemTableState,
+  isCategoryButtonActive,
+  isSingleSelectButtonActive,
+  matchesProblemRow,
+  reduceProblemTableState
+} from "./eureka-problem-table-state"
 
 export const initializeProblemTable = Effect.gen(function* () {
   const browser = yield* Browser
@@ -69,13 +37,13 @@ export const initializeProblemTable = Effect.gen(function* () {
   const defaultLanguage = table.dataset.languageFilter || ""
   let state = createProblemTableState(defaultLanguage)
 
-  const syncSingleSelectButtons = (kind: Exclude<FilterKind, "clear" | "category">, activeValue: string) => {
+  const syncSingleSelectButtons = (kind: Exclude<FilterKind, "clear" | "category">) => {
     filterButtons.forEach((button) => {
       if (button.kind !== kind) {
         return
       }
 
-      button.element.classList.toggle("is-active", button.value === activeValue || (!activeValue && button.value === ""))
+      button.element.classList.toggle("is-active", isSingleSelectButtonActive(state, kind, button.value))
     })
   }
 
@@ -85,8 +53,7 @@ export const initializeProblemTable = Effect.gen(function* () {
         return
       }
 
-      const isActive = button.value === "" ? state.categories.size === 0 : state.categories.has(button.value)
-      button.element.classList.toggle("is-active", isActive)
+      button.element.classList.toggle("is-active", isCategoryButtonActive(state, button.value))
     })
   }
 
@@ -130,10 +97,7 @@ export const initializeProblemTable = Effect.gen(function* () {
 
   if (searchInput) {
     cleanups.push(yield* addEventListener(searchInput, "input", () => {
-      state = {
-        ...state,
-        search: searchInput.value.trim().toLowerCase()
-      }
+      state = reduceProblemTableState(state, { type: "search", value: searchInput.value })
       render()
     }))
   }
@@ -143,7 +107,7 @@ export const initializeProblemTable = Effect.gen(function* () {
       const { kind, value } = button
 
       if (kind === "clear") {
-        state = createProblemTableState(defaultLanguage)
+        state = reduceProblemTableState(state, { type: "clear", defaultLanguage })
 
         if (searchInput) {
           searchInput.value = ""
@@ -156,17 +120,11 @@ export const initializeProblemTable = Effect.gen(function* () {
       }
 
       if (kind === "category") {
-        state = {
-          ...state,
-          categories: toggleCategory(state.categories, value)
-        }
+        state = reduceProblemTableState(state, { type: "category", value })
         syncCategoryButtons()
       } else if (kind === "difficulty" || kind === "language") {
-        state = {
-          ...state,
-          [kind]: toggleSingleSelect(state[kind], value)
-        }
-        syncSingleSelectButtons(kind, state[kind])
+        state = reduceProblemTableState(state, { type: kind, value })
+        syncSingleSelectButtons(kind)
       }
 
       render()
