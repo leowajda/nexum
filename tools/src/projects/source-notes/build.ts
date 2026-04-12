@@ -6,7 +6,8 @@ import { SourceNotesError } from "../../core/errors.js"
 import { generatedSiteDirectory, rootDirectory } from "../../core/paths.js"
 import { encodeFrontMatter } from "../../core/frontmatter.js"
 import { encodeYaml } from "../../core/yaml.js"
-import { FileStore, GitClient } from "../../core/workspace.js"
+import { FileStore } from "../../core/workspace.js"
+import { resolveRepositoryMetadata, toPosixPath } from "../../core/repository.js"
 import type { ProjectManifest } from "../schema.js"
 import type { GeneratedAssetFile, GeneratedTextFile, ProjectAdapter, ProjectBuild, ProjectCard } from "../types.js"
 import {
@@ -78,8 +79,6 @@ const gradleWorkspaceRootMarkers = ["gradlew", "settings.gradle", "settings.grad
 const gradleWorkspaceMarkers = ["build.gradle", "build.gradle.kts"] as const
 const scalaWorkspaceMarkers = ["build.sbt"] as const
 
-const toPosixPath = (value: string) => value.split(path.sep).join("/")
-
 const slugify = (value: string) =>
   value
     .replace(/([a-z0-9])([A-Z])/g, "$1-$2")
@@ -105,28 +104,6 @@ const buildCard = (manifest: ProjectManifest, sourceUrl: string): ProjectCard =>
   url: `${manifest.route_base}/`,
   source_url: sourceUrl
 })
-
-const normalizeRemoteUrl = (remoteUrl: string) => {
-  if (remoteUrl.startsWith("git@github.com:")) {
-    return `https://github.com/${remoteUrl.slice("git@github.com:".length).replace(/\.git$/, "")}`
-  }
-
-  return remoteUrl.replace(/\.git$/, "")
-}
-
-const resolveGitMetadata = (repoRoot: string) =>
-  Effect.gen(function* () {
-    const gitClient = yield* GitClient
-    const sourceUrl = yield* gitClient.runGit(repoRoot, "remote", "get-url", "origin").pipe(
-      Effect.map(normalizeRemoteUrl),
-      Effect.catchAll(() => Effect.succeed(""))
-    )
-    const branch = yield* gitClient.runGit(repoRoot, "rev-parse", "--abbrev-ref", "HEAD").pipe(
-      Effect.catchAll(() => Effect.succeed("master"))
-    )
-
-    return { branch, sourceUrl }
-  })
 
 const maybeReadText = (filePath: string) =>
   Effect.gen(function* () {
@@ -635,7 +612,7 @@ const buildSourceNotesReferencePanels = (
 const buildSourceNotes = (manifest: ProjectManifest) =>
   Effect.gen(function* () {
     const repoRoot = path.join(rootDirectory, manifest.source_repo_path)
-    const gitMetadata = yield* resolveGitMetadata(repoRoot)
+    const gitMetadata = yield* resolveRepositoryMetadata(repoRoot)
     const repoReadmeSource = yield* maybeReadText(path.join(repoRoot, "README.md"))
     const repoReadme = yield* rewriteMarkdownAssets(repoReadmeSource, repoRoot, `${manifest.slug}/project`)
     const moduleCandidates = yield* discoverModuleCandidates(manifest, repoRoot)

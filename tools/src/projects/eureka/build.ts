@@ -4,7 +4,8 @@ import type { GraphWorkspaceInput } from "../../graph/model.js"
 import { buildCodeReferencePanels } from "../../graph/service.js"
 import { encodeYaml } from "../../core/yaml.js"
 import { generatedSiteDirectory, rootDirectory } from "../../core/paths.js"
-import { FileStore, GitClient } from "../../core/workspace.js"
+import { FileStore } from "../../core/workspace.js"
+import { resolveRepositoryMetadata, toPosixPath } from "../../core/repository.js"
 import type { ProjectManifest } from "../schema.js"
 import type { GeneratedTextFile, ProjectAdapter, ProjectBuild, ProjectCard } from "../types.js"
 import { buildEurekaModel, decodeEurekaSource, type EurekaSource } from "./model.js"
@@ -29,30 +30,7 @@ const localSourcePath = (sourceRoot: string, githubUrl: string): string | null =
   return path.join(sourceRoot, match[1], match[2])
 }
 
-const normalizeRemoteUrl = (remoteUrl: string) => {
-  if (remoteUrl.startsWith("git@github.com:")) {
-    return `https://github.com/${remoteUrl.slice("git@github.com:".length).replace(/\.git$/, "")}`
-  }
-
-  return remoteUrl.replace(/\.git$/, "")
-}
-
 const slugify = (value: string) => value.toLowerCase().replace(/[^a-z0-9_-]/g, "-")
-const toPosixPath = (value: string) => value.split(path.sep).join("/")
-
-const resolveGitMetadata = (repoRoot: string) =>
-  Effect.gen(function* () {
-    const gitClient = yield* GitClient
-    const sourceUrl = yield* gitClient.runGit(repoRoot, "remote", "get-url", "origin").pipe(
-      Effect.map(normalizeRemoteUrl),
-      Effect.catchAll(() => Effect.succeed(""))
-    )
-    const branch = yield* gitClient.runGit(repoRoot, "rev-parse", "--abbrev-ref", "HEAD").pipe(
-      Effect.catchAll(() => Effect.succeed("master"))
-    )
-
-    return { branch, sourceUrl }
-  })
 
 const eurekaWorkspaceConfig = (sourceRoot: string, languageSlug: string) => {
   switch (languageSlug) {
@@ -132,7 +110,7 @@ const buildEurekaReferencePanels = (
     })
 
     const workspaceMetadataEntries = yield* Effect.forEach(Array.from(groupedDocuments.keys()), (workspaceRoot) =>
-      resolveGitMetadata(workspaceRoot).pipe(
+      resolveRepositoryMetadata(workspaceRoot).pipe(
         Effect.map((metadata) => [workspaceRoot, metadata] as const)
       )
     )
@@ -222,11 +200,10 @@ const buildCard = (manifest: ProjectManifest, sourceUrl: string): ProjectCard =>
 const buildEureka = (manifest: ProjectManifest) =>
   Effect.gen(function* () {
     const fileStore = yield* FileStore
-    const gitClient = yield* GitClient
     const sourceRoot = path.join(rootDirectory, manifest.source_repo_path)
     const sourceRaw = yield* fileStore.readText(path.join(sourceRoot, "_data/problems.yml"))
     const source = yield* decodeEurekaSource(sourceRaw)
-    const sourceUrl = yield* gitClient.runGit(sourceRoot, "remote", "get-url", "origin")
+    const sourceMetadata = yield* resolveRepositoryMetadata(sourceRoot)
     const referencePanels = yield* buildEurekaReferencePanels(manifest, sourceRoot, source)
     const model = yield* buildEurekaModel(manifest, source, (githubUrl) => {
       const sourcePath = localSourcePath(sourceRoot, githubUrl)
@@ -261,7 +238,7 @@ const buildEureka = (manifest: ProjectManifest) =>
     ])
 
     return {
-      card: buildCard(manifest, sourceUrl),
+      card: buildCard(manifest, sourceMetadata.sourceUrl),
       files: [...model.files, ...dataFiles],
       assets: []
     } satisfies ProjectBuild
