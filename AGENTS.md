@@ -27,4 +27,5 @@
 
 ## Rule
 - Debug rendered pages, not raw templates
+- Use `gh` for all GitHub operations, including pull requests and related repository workflows
 - Use conventional commit messages: `type(scope): subject`
