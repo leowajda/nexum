@@ -6,6 +6,7 @@
 
 ## Core Commands
 - Sync `README.md` symlink to `AGENTS.md`: `pnpm docs:refresh`
+- Sync shared theme source into the live Jekyll source tree after theme edits: `pnpm theme:refresh`
 - Typecheck: `pnpm typecheck`
 - Tool tests: `pnpm test:tools`
 - Generate site source: `pnpm generate`
@@ -13,12 +14,12 @@
 
 ## Preview
 - URL: `http://127.0.0.1:4173`
-- `pnpm preview` runs the real pipeline, then starts `jekyll serve` with `--livereload`
+- `pnpm preview` runs the real pipeline, then starts `jekyll serve` against `site-src` with `--livereload`
 - Prefer `pnpm preview` over `pnpm serve` for debugging and browser automation
 
 ## Styling
 - For styling-related work, treat [packages/theme/src/assets/css](/home/leowajda/Projects/leowajda.github.io/packages/theme/src/assets/css:1) and [packages/theme/src/_sass](/home/leowajda/Projects/leowajda.github.io/packages/theme/src/_sass:1) as the styling source of truth
-- Keep theme markup aligned with [packages/theme/src](/home/leowajda/Projects/leowajda.github.io/packages/theme/src:1) and do not scatter one-off styling logic into unrelated templates or scripts
+- Keep theme markup aligned with [packages/theme/src](/home/leowajda/Projects/leowajda.github.io/packages/theme/src:1), then sync it into `site-src` with `pnpm theme:refresh`
 - The site styling is Jekyll-native Sass now; prefer semantic theme classes and shared partials over utility-class authoring or external CSS build steps
 - Preserve a Jekyll-first approach for UI work: prefer layouts, includes, Liquid, `site.data`, and front matter over client-side assembly
 

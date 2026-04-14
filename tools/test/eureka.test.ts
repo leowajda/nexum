@@ -59,8 +59,8 @@ problems:
     { slug: "rust", label: "Rust" },
     { slug: "kotlin", label: "Kotlin" }
   ])
-  assert.ok(model.files.some((file) => file.path.endsWith("site/eureka/rust/index.md")))
-  assert.ok(model.files.some((file) => file.path.endsWith("site/eureka/kotlin/index.md")))
+  assert.ok(model.files.some((file) => file.path.endsWith("site-src/eureka/rust/index.md")))
+  assert.ok(model.files.some((file) => file.path.endsWith("site-src/eureka/kotlin/index.md")))
   assert.equal(model.problemPages["valid-parentheses"]?.languages[0]?.label, "Rust")
   assert.equal(model.problemPages["valid-parentheses"]?.implementations[0]?.code_language, "rust")
 })

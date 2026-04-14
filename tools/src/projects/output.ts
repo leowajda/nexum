@@ -1,6 +1,6 @@
 import { Effect, Schema } from "effect"
 import path from "node:path"
-import { generatedSiteDirectory } from "../core/paths.js"
+import { jekyllSourceDirectory } from "../core/paths.js"
 import { FileStore } from "../core/workspace.js"
 import { encodeYaml } from "../core/yaml.js"
 import { ProjectCardSchema, type ProjectBuild } from "./types.js"
@@ -12,6 +12,7 @@ export const writeProjectBuildOutputs = (builds: ReadonlyArray<ProjectBuild>) =>
     const fileStore = yield* FileStore
     const files = builds.flatMap((build) => build.files)
     const assets = builds.flatMap((build) => build.assets)
+    const projectsYamlPath = path.join(jekyllSourceDirectory, "_data/generated/projects.yml")
     const projectsYaml = yield* encodeYaml(
       "Unable to encode generated project index",
       ProjectsSchema,
@@ -20,5 +21,11 @@ export const writeProjectBuildOutputs = (builds: ReadonlyArray<ProjectBuild>) =>
 
     yield* Effect.forEach(files, (file) => fileStore.writeText(file.path, file.content), { concurrency: 8 })
     yield* Effect.forEach(assets, (asset) => fileStore.copyFile(asset.source_path, asset.target_path), { concurrency: 8 })
-    yield* fileStore.writeText(path.join(generatedSiteDirectory, "_data/generated/projects.yml"), projectsYaml)
+    yield* fileStore.writeText(projectsYamlPath, projectsYaml)
+
+    return [
+      ...files.map((file) => file.path),
+      ...assets.map((asset) => asset.target_path),
+      projectsYamlPath
+    ]
   })

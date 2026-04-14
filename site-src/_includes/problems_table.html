@@ -56,11 +56,11 @@
             {%- assign language_implementations = problem.implementations | where: "language", language.slug -%}
             <td>
               {%- if language_implementations.size > 0 -%}
-                <ul class="solution-list">
+                <div class="solution-chip-list" aria-label="{{ language.label }} solutions">
                   {%- for implementation in language_implementations -%}
-                    <li><a href="{{ implementation.detail_url | relative_url }}">{{ implementation.approach_label }}</a></li>
+                    {%- include solution_chip.html implementation=implementation -%}
                   {%- endfor -%}
-                </ul>
+                </div>
               {%- else -%}
                 <span class="solution-empty">—</span>
               {%- endif -%}

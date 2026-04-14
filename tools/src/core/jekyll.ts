@@ -1,11 +1,11 @@
 import path from "node:path"
-import { generatedSiteDirectory } from "./paths.js"
+import { jekyllSourceDirectory } from "./paths.js"
 
 export const generatedCollectionFile = (collection: string, ...segments: ReadonlyArray<string>) =>
-  path.join(generatedSiteDirectory, `_${collection}`, ...segments)
+  path.join(jekyllSourceDirectory, `_${collection}`, ...segments)
 
 export const generatedDataFile = (...segments: ReadonlyArray<string>) =>
-  path.join(generatedSiteDirectory, "_data", "generated", ...segments)
+  path.join(jekyllSourceDirectory, "_data", "generated", ...segments)
 
 export const generatedPageFile = (...segments: ReadonlyArray<string>) =>
-  path.join(generatedSiteDirectory, ...segments)
+  path.join(jekyllSourceDirectory, ...segments)
