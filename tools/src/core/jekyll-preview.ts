@@ -1,6 +1,6 @@
 import { Effect } from "effect"
 import { spawn } from "node:child_process"
-import { rootDirectory } from "./paths.js"
+import { jekyllSourceDirectory, rootDirectory } from "./paths.js"
 import { previewHost, previewPort } from "./preview.js"
 
 export const startJekyllPreview = Effect.acquireRelease(
@@ -10,14 +10,16 @@ export const startJekyllPreview = Effect.acquireRelease(
       "jekyll",
       "serve",
       "--source",
-      "site",
+      jekyllSourceDirectory,
       "--destination",
       "_site",
       "--host",
       previewHost,
       "--port",
       String(previewPort),
-      "--livereload"
+      "--livereload",
+      "--livereload-port",
+      "35730"
     ], {
       cwd: rootDirectory,
       stdio: "inherit"

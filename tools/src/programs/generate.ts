@@ -4,13 +4,14 @@ import { WorkspaceLive } from "../core/workspace.js"
 import { buildProjects } from "../projects/builds.js"
 import { writeProjectBuildOutputs } from "../projects/output.js"
 import { ProjectAdapterRegistryLive } from "../projects/registry.js"
-import { prepareGeneratedSiteDirectory } from "./generated-site.js"
+import { clearGeneratedOutputs, writeGeneratedOutputsManifest } from "./generated-site.js"
 
 const program = Effect.gen(function* () {
-  yield* prepareGeneratedSiteDirectory
+  yield* clearGeneratedOutputs
   const builds = yield* buildProjects
-  yield* writeProjectBuildOutputs(builds)
-  yield* buildBrowserAssets
+  const projectOutputFiles = yield* writeProjectBuildOutputs(builds)
+  const browserAssetFiles = yield* buildBrowserAssets
+  yield* writeGeneratedOutputsManifest([...projectOutputFiles, ...browserAssetFiles])
 })
 
 export const generateSite = program.pipe(Effect.provide(Layer.mergeAll(ProjectAdapterRegistryLive, WorkspaceLive)))

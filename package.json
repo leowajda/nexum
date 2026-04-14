@@ -6,13 +6,14 @@
   "packageManager": "pnpm@10.6.5",
   "scripts": {
     "docs:refresh": "tsx tools/src/main.ts docs",
+    "theme:refresh": "cp -R packages/theme/src/. site-src/",
     "sync:sources": "tsx tools/src/main.ts sync-sources",
     "generate": "tsx tools/src/main.ts generate",
     "generate:refresh-graphs": "tsx tools/src/main.ts generate --refresh-graphs",
     "preview": "tsx tools/src/main.ts preview",
-    "build:site": "pnpm generate && bundle exec jekyll build --source site --destination _site",
-    "build:site:refresh-graphs": "pnpm generate:refresh-graphs && bundle exec jekyll build --source site --destination _site",
-    "serve": "pnpm generate && bundle exec jekyll serve --source site --destination _site --livereload",
+    "build:site": "pnpm generate && bundle exec jekyll build --source site-src --destination _site",
+    "build:site:refresh-graphs": "pnpm generate:refresh-graphs && bundle exec jekyll build --source site-src --destination _site",
+    "serve": "pnpm generate && bundle exec jekyll serve --source site-src --destination _site --livereload --livereload-port 35730",
     "typecheck": "tsc --noEmit",
     "test:tools": "node --import tsx --test tools/test/**/*.test.ts"
   },

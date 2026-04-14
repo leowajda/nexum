@@ -11,5 +11,18 @@ site/
 _site/
 .cache/
 .playwright-cli/
+site-src/.generated-files.json
+site-src/_data/generated/
+site-src/_problem_embeds/
+site-src/_problems/
+site-src/_source_documents/
+site-src/_source_modules/
+site-src/assets/generated/
+site-src/assets/js/
+site-src/assets/vendor/
+site-src/eureka/cpp/
+site-src/eureka/java/
+site-src/eureka/python/
+site-src/eureka/scala/
 
 .DS_Store

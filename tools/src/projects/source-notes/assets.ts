@@ -1,6 +1,6 @@
 import { Effect } from "effect"
 import path from "node:path"
-import { generatedSiteDirectory } from "../../core/paths.js"
+import { jekyllSourceDirectory } from "../../core/paths.js"
 import { FileStore } from "../../core/workspace.js"
 import type { GeneratedAssetFile } from "../types.js"
 
@@ -63,8 +63,8 @@ export const rewriteMarkdownAssets = (
           continue
         }
 
-        const targetPath = path.join(generatedSiteDirectory, "assets/generated", assetScope, sanitizeAssetTargetPath(cleanReference))
-        const publicUrl = `/${path.relative(generatedSiteDirectory, targetPath).split(path.sep).join("/")}`
+        const targetPath = path.join(jekyllSourceDirectory, "assets/generated", assetScope, sanitizeAssetTargetPath(cleanReference))
+        const publicUrl = `/${path.relative(jekyllSourceDirectory, targetPath).split(path.sep).join("/")}`
         seen.set(cleanReference, publicUrl)
         assets.push({ source_path: sourcePath, target_path: targetPath })
         if (!firstImageUrl) {

@@ -20,8 +20,10 @@ const getStoredTheme = (): Theme | null => {
   }
 }
 
+const getThemeRoot = () => document.documentElement
+
 const resolveTheme = (): Theme => {
-  const attribute = document.body.getAttribute("a") || "auto"
+  const attribute = getThemeRoot().getAttribute("a") || "auto"
   if (attribute === "light" || attribute === "dark") {
     return attribute
   }
@@ -32,7 +34,9 @@ const resolveTheme = (): Theme => {
 }
 
 const applyTheme = (theme: Theme) => {
-  document.body.setAttribute("a", theme)
+  const root = getThemeRoot()
+  root.setAttribute("a", theme)
+  root.style.colorScheme = theme
 }
 
 const updateThemeButton = (button: HTMLButtonElement) => {
@@ -52,6 +56,8 @@ const initializeThemeToggle = () => {
   const storedTheme = getStoredTheme()
   if (storedTheme) {
     applyTheme(storedTheme)
+  } else {
+    getThemeRoot().style.colorScheme = resolveTheme()
   }
 
   const button = document.querySelector<HTMLButtonElement>("[data-theme-toggle]")
