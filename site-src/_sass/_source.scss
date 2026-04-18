@@ -96,20 +96,6 @@
   font-weight: bold;
 }
 
-.source-document-meta {
-  margin-bottom: 0.5rem;
-  min-width: 0;
-  overflow-x: hidden;
-}
-
-.source-document-meta__path {
-  display: block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .source-breadcrumbs ol {
   list-style: none;
   margin: 0;

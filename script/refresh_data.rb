@@ -18,6 +18,7 @@ module RefreshData
     File.join(COLLECTIONS_DIRECTORY, "_eureka_languages"),
     File.join(COLLECTIONS_DIRECTORY, "_eureka_problems"),
     File.join(COLLECTIONS_DIRECTORY, "_eureka_implementations"),
+    File.join(COLLECTIONS_DIRECTORY, "_source_languages"),
     File.join(COLLECTIONS_DIRECTORY, "_source_modules"),
     File.join(COLLECTIONS_DIRECTORY, "_source_documents"),
     File.join(SITE_SOURCE, "_data", "generated"),
@@ -525,10 +526,7 @@ module RefreshData
   end
 
   class SourceNotesBuilder
-    SUPPORTED_SOURCE_ROOTS = [
-      { "language" => "java", "label" => "src/main/java" },
-      { "language" => "scala", "label" => "src/main/scala" }
-    ].freeze
+    CATALOG_VERSION = 1
 
     IGNORED_DIRECTORY_NAMES = %w[.git .idea .bsp build dist node_modules out target].freeze
 
@@ -558,75 +556,128 @@ module RefreshData
     end
 
     def build
-      metadata = Helpers.repository_metadata(@repo_root)
+      catalog = decode_catalog(Helpers.read_text(File.join(@repo_root, "data", "modules.yml")))
       project_context = {
-        "project_slug" => @manifest.fetch("slug")
+        "project_slug" => @manifest.fetch("slug"),
+        "project_title" => @manifest.fetch("title"),
+        "project_url" => @manifest.fetch("entry_url"),
+        "project_source_url" => @manifest.fetch("source_url")
       }
-      module_candidates = discover_module_candidates
-      raise "No displayable modules found in '#{@repo_root}'" if module_candidates.empty?
 
-      built_modules = module_candidates.map { |module_candidate| build_module(module_candidate, metadata, project_context) }
+      built_languages = catalog.fetch("languages").map do |language|
+        build_language(language, catalog.fetch("source_url_base"), project_context)
+      end
 
       {
-        files: built_modules.flat_map { |built_module| built_module.fetch(:files) },
-        assets: built_modules.flat_map { |built_module| built_module.fetch(:assets) }
+        files: built_languages.flat_map { |built_language| built_language.fetch(:files) },
+        assets: built_languages.flat_map { |built_language| built_language.fetch(:assets) }
       }
     end
 
     private
 
-    def discover_module_candidates
-      root_candidate = {
-        "slug" => "root",
-        "title" => "#{@manifest.fetch('title')} Source",
-        "absolute_path" => @repo_root,
-        "relative_path" => "",
-        "roots" => detect_module_roots(@repo_root)
+    def decode_catalog(raw)
+      source = Helpers.ensure_hash(Helpers.parse_yaml(raw, "Unable to decode Zibaldone modules catalog"), "Zibaldone catalog")
+      version = source["version"]
+      raise "Zibaldone catalog.version must be #{CATALOG_VERSION}" unless version == CATALOG_VERSION
+
+      project = Helpers.ensure_hash(source["project"], "Zibaldone catalog.project")
+      project_slug = Helpers.ensure_string(project["slug"], "Zibaldone catalog.project.slug")
+      raise "Zibaldone catalog.project.slug must match '#{@manifest.fetch('slug')}'" unless project_slug == @manifest.fetch("slug")
+
+      source_url_base = Helpers.ensure_string(source["source_url_base"], "Zibaldone catalog.source_url_base")
+      languages = Helpers.ensure_hash(source["languages"], "Zibaldone catalog.languages").map do |language_slug, value|
+        decode_language(language_slug, Helpers.ensure_hash(value, "Language '#{language_slug}'"))
+      end
+
+      raise "Zibaldone catalog.languages must not be empty" if languages.empty?
+
+      {
+        "source_url_base" => source_url_base,
+        "languages" => languages.sort_by { |language| language.fetch("title").downcase }
+      }
+    end
+
+    def decode_language(language_slug, raw_language)
+      record = {
+        "slug" => language_slug,
+        "title" => Helpers.ensure_string(raw_language["title"], "Language '#{language_slug}'.title"),
+        "path" => Helpers.ensure_string(raw_language["path"], "Language '#{language_slug}'.path"),
+        "modules" => Helpers.ensure_hash(raw_language["modules"], "Language '#{language_slug}'.modules").map do |module_slug, value|
+          decode_module(language_slug, module_slug, Helpers.ensure_hash(value, "Module '#{language_slug}/#{module_slug}'"))
+        end
       }
 
-      child_candidates = Dir.children(@repo_root).sort.filter_map do |name|
-        full_path = File.join(@repo_root, name)
-        next unless File.directory?(full_path)
-        next if name.start_with?(".") || IGNORED_DIRECTORY_NAMES.include?(name)
-
-        roots = detect_module_roots(full_path)
-        {
-          "slug" => slugify_module_name(name),
-          "title" => titleize_module_name(name),
-          "absolute_path" => full_path,
-          "relative_path" => name,
-          "roots" => roots
-        }
+      if record.fetch("modules").empty?
+        raise "Language '#{language_slug}' must define at least one module"
       end
 
-      displayable_children = child_candidates.select { |candidate| !candidate.fetch("roots").empty? }
-      return displayable_children unless displayable_children.empty?
-
-      root_candidate.fetch("roots").empty? ? [] : [root_candidate]
+      record
     end
 
-    def detect_module_roots(absolute_path)
-      SUPPORTED_SOURCE_ROOTS.filter_map do |root|
-        root_path = File.join(absolute_path, root.fetch("label"))
-        next unless File.directory?(root_path)
-
-        {
-          "language" => root.fetch("language"),
-          "label" => root.fetch("label"),
-          "absolute_path" => root_path
-        }
-      end
+    def decode_module(language_slug, module_slug, raw_module)
+      {
+        "slug" => module_slug,
+        "title" => Helpers.ensure_string(raw_module["title"], "Module '#{language_slug}/#{module_slug}'.title"),
+        "path" => Helpers.ensure_string(raw_module["path"], "Module '#{language_slug}/#{module_slug}'.path"),
+        "source_roots" => Helpers.ensure_array_of_strings(raw_module["source_roots"], "Module '#{language_slug}/#{module_slug}'.source_roots")
+      }
     end
 
-    def build_module(module_candidate, metadata, project_context)
-      readme = rewrite_markdown_assets(
-        Helpers.maybe_read_text(File.join(module_candidate.fetch("absolute_path"), "README.md")),
-        module_candidate.fetch("absolute_path"),
-        "#{@manifest.fetch('slug')}/#{module_candidate.fetch('slug')}"
+    def build_language(language, source_url_base, project_context)
+      language_context = project_context.merge(
+        "language_slug" => language.fetch("slug"),
+        "language_title" => language.fetch("title"),
+        "language_url" => "#{@manifest.fetch('route_base')}/#{language.fetch('slug')}/"
       )
-      documents = build_module_documents(module_candidate, metadata)
-      module_source_url = build_module_source_url(module_candidate, metadata)
-      module_record = build_module_record(module_candidate, module_source_url, documents, project_context)
+      built_modules = language.fetch("modules").sort_by { |module_record| module_record.fetch("title").downcase }.map do |module_record|
+        build_module(module_record, source_url_base, language_context)
+      end
+      language_source_url = build_tree_source_url(source_url_base, language.fetch("path"))
+      language_record = build_language_record(language_context, language_source_url)
+
+      {
+        files: [build_language_page(language_record)] + built_modules.flat_map { |built_module| built_module.fetch(:files) },
+        assets: built_modules.flat_map { |built_module| built_module.fetch(:assets) }
+      }
+    end
+
+    def build_language_page(language_record)
+      {
+        path: generated_source_language_path(language_record.fetch("language_slug")),
+        content: Helpers.render_document(
+          language_record.merge(
+            "title" => language_record.fetch("language_title"),
+            "description" => "Source notes for #{language_record.fetch('language_title')}."
+          )
+        )
+      }
+    end
+
+    def build_language_record(language_context, source_url)
+      {
+        "project_slug" => language_context.fetch("project_slug"),
+        "project_title" => language_context.fetch("project_title"),
+        "project_url" => language_context.fetch("project_url"),
+        "project_source_url" => language_context.fetch("project_source_url"),
+        "language_slug" => language_context.fetch("language_slug"),
+        "language_title" => language_context.fetch("language_title"),
+        "source_url" => source_url
+      }
+    end
+
+    def build_module(module_candidate, source_url_base, language_context)
+      absolute_path = File.join(@repo_root, module_candidate.fetch("path"))
+      raise "Module '#{module_candidate.fetch('slug')}' is missing at '#{absolute_path}'" unless File.directory?(absolute_path)
+
+      readme = rewrite_markdown_assets(
+        Helpers.maybe_read_text(File.join(absolute_path, "README.md")),
+        absolute_path,
+        "#{@manifest.fetch('slug')}/#{language_context.fetch('language_slug')}/#{module_candidate.fetch('slug')}"
+      )
+      documents = build_module_documents(module_candidate, absolute_path, source_url_base, language_context)
+      module_source_url = build_tree_source_url(source_url_base, module_candidate.fetch("path"))
+      module_record = build_module_record(module_candidate, module_source_url, documents, language_context)
       module_data = module_record.merge("readme_markdown" => readme.fetch(:markdown))
 
       {
@@ -641,11 +692,11 @@ module RefreshData
     def build_module_page(module_data)
       front_matter = module_data.reject { |key, _value| key == "readme_markdown" }
       {
-        path: generated_source_module_path(module_data.fetch("slug")),
+        path: generated_source_module_path(module_data.fetch("language_slug"), module_data.fetch("module_slug")),
         content: Helpers.render_document(
           front_matter.merge(
             "description" => "#{module_data.fetch('title')} notes",
-            "module_slug" => module_data.fetch("slug")
+            "module_slug" => module_data.fetch("module_slug")
           ),
           module_data.fetch("readme_markdown")
         )
@@ -666,16 +717,21 @@ module RefreshData
       }
     end
 
-    def build_module_documents(module_candidate, metadata)
-      module_candidate.fetch("roots").flat_map do |root|
-        walk_text_files(root.fetch("absolute_path")).map do |file_path|
+    def build_module_documents(module_candidate, absolute_path, source_url_base, language_context)
+      module_candidate.fetch("source_roots").flat_map do |root_label|
+        absolute_root = File.join(absolute_path, root_label)
+        raise "Module '#{module_candidate.fetch('slug')}' root '#{root_label}' is missing at '#{absolute_root}'" unless File.directory?(absolute_root)
+
+        walk_text_files(absolute_root).map do |file_path|
           content = Helpers.read_text(file_path)
           build_source_document(
             module_candidate: module_candidate,
-            root: root,
+            root_label: root_label,
+            absolute_root: absolute_root,
             file_path: file_path,
             content: content,
-            metadata: metadata
+            source_url_base: source_url_base,
+            language_context: language_context
           )
         end
       end
@@ -694,26 +750,31 @@ module RefreshData
       end
     end
 
-    def build_source_document(module_candidate:, root:, file_path:, content:, metadata:)
-      relative_to_root = relative_path(root.fetch("absolute_path"), file_path)
+    def build_source_document(module_candidate:, root_label:, absolute_root:, file_path:, content:, source_url_base:, language_context:)
+      relative_to_root = relative_path(absolute_root, file_path)
       route_path = build_route_path(relative_to_root)
-      tree_path = "#{root.fetch('label')}/#{relative_to_root}"
+      tree_path = "#{root_label}/#{relative_to_root}"
       source_path = relative_path(@repo_root, file_path)
       document_metadata = TEXT_FILE_METADATA[File.extname(file_path).downcase]
-      repository_url = metadata.fetch("source_url").empty? ? @manifest.fetch("source_url") : metadata.fetch("source_url")
       document = {
-        "id" => "#{module_candidate.fetch('slug')}:#{tree_path}",
-        "project_slug" => @manifest.fetch("slug"),
+        "id" => "#{language_context.fetch('language_slug')}:#{module_candidate.fetch('slug')}:#{tree_path}",
+        "project_slug" => language_context.fetch("project_slug"),
+        "project_title" => language_context.fetch("project_title"),
+        "project_url" => language_context.fetch("project_url"),
+        "project_source_url" => language_context.fetch("project_source_url"),
+        "language_slug" => language_context.fetch("language_slug"),
+        "language_title" => language_context.fetch("language_title"),
+        "language_url" => language_context.fetch("language_url"),
         "module_slug" => module_candidate.fetch("slug"),
         "module_title" => module_candidate.fetch("title"),
         "title" => File.basename(file_path),
-        "route_url" => "#{@manifest.fetch('route_base')}/#{module_candidate.fetch('slug')}/#{route_path}/",
+        "route_url" => "#{language_context.fetch('language_url')}#{module_candidate.fetch('slug')}/#{route_path}/",
         "tree_path" => tree_path,
         "source_path" => source_path,
-        "source_url" => repository_url.empty? ? "" : "#{repository_url}/blob/#{metadata.fetch('branch')}/#{source_path}",
-        "language" => document_metadata ? document_metadata.fetch("language") : root.fetch("language"),
+        "source_url" => source_url_base.empty? ? "" : "#{source_url_base}/#{source_path}",
+        "language" => document_metadata ? document_metadata.fetch("language") : language_context.fetch("language_slug"),
         "format" => document_metadata ? document_metadata.fetch("format") : "code",
-        "breadcrumbs" => build_document_breadcrumbs(module_candidate.fetch("slug"), module_candidate.fetch("title"), relative_to_root)
+        "breadcrumbs" => build_document_breadcrumbs(language_context, module_candidate.fetch("slug"), module_candidate.fetch("title"), relative_to_root)
       }
       body = build_document_body(content, document_metadata)
 
@@ -729,10 +790,11 @@ module RefreshData
       "~~~#{metadata.fetch('syntax')}\n#{content.rstrip}\n~~~\n"
     end
 
-    def build_document_breadcrumbs(module_slug, module_title, relative_path)
+    def build_document_breadcrumbs(language_context, module_slug, module_title, relative_path)
       breadcrumbs = [
-        { "label" => @manifest.fetch("title"), "url" => "#{@manifest.fetch('route_base')}/" },
-        { "label" => module_title, "url" => "#{@manifest.fetch('route_base')}/#{module_slug}/" }
+        { "label" => language_context.fetch("project_title"), "url" => language_context.fetch("project_url") },
+        { "label" => language_context.fetch("language_title"), "url" => language_context.fetch("language_url") },
+        { "label" => module_title, "url" => "#{language_context.fetch('language_url')}#{module_slug}/" }
       ]
 
       relative_path.split("/")[0...-1].each do |segment|
@@ -749,33 +811,28 @@ module RefreshData
       end.reject(&:empty?).join("/")
     end
 
-    def build_module_source_url(module_candidate, metadata)
-      repository_url = metadata.fetch("source_url").empty? ? @manifest.fetch("source_url") : metadata.fetch("source_url")
-      return "" if repository_url.empty?
-
-      if module_candidate.fetch("relative_path").empty?
-        "#{repository_url}/tree/#{metadata.fetch('branch')}"
-      else
-        "#{repository_url}/tree/#{metadata.fetch('branch')}/#{module_candidate.fetch('relative_path')}"
-      end
-    end
-
-    def build_module_record(module_candidate, module_source_url, documents, project_context)
+    def build_module_record(module_candidate, module_source_url, documents, language_context)
       document_entries = documents.map { |document| document.fetch(:metadata) }
       {
-        "project_slug" => project_context.fetch("project_slug"),
+        "project_slug" => language_context.fetch("project_slug"),
+        "project_title" => language_context.fetch("project_title"),
+        "project_url" => language_context.fetch("project_url"),
+        "project_source_url" => language_context.fetch("project_source_url"),
+        "language_slug" => language_context.fetch("language_slug"),
+        "language_title" => language_context.fetch("language_title"),
+        "language_url" => language_context.fetch("language_url"),
         "slug" => module_candidate.fetch("slug"),
+        "module_slug" => module_candidate.fetch("slug"),
         "title" => module_candidate.fetch("title"),
         "source_url" => module_source_url,
-        "language_labels" => module_candidate.fetch("roots").map { |root| titleize_module_name(root.fetch("language")) }.uniq,
-        "document_count" => document_entries.size,
+        "route_url" => "#{language_context.fetch('language_url')}#{module_candidate.fetch('slug')}/",
         "roots" => build_module_roots(module_candidate, document_entries)
       }
     end
 
     def build_module_roots(module_candidate, documents)
-      module_candidate.fetch("roots").map do |root|
-        prefix = "#{root.fetch('label')}/"
+      module_candidate.fetch("source_roots").map do |root_label|
+        prefix = "#{root_label}/"
         entries = documents
           .select { |document| document.fetch("tree_path").start_with?(prefix) }
           .map do |document|
@@ -786,9 +843,9 @@ module RefreshData
           end
 
         {
-          "label" => root.fetch("label"),
+          "label" => root_label,
           "tree_path" => prefix,
-          "nodes" => build_file_tree(root.fetch("label"), entries)
+          "nodes" => build_file_tree(root_label, entries)
         }
       end
     end
@@ -896,14 +953,27 @@ module RefreshData
         .join(" ")
     end
 
-    def generated_source_module_path(module_slug)
-      Helpers.generated_collection_path("source_modules", @manifest.fetch("slug"), "#{module_slug}.md")
+    def generated_source_language_path(language_slug)
+      Helpers.generated_collection_path("source_languages", @manifest.fetch("slug"), "#{language_slug}.md")
     end
 
-    def generated_source_document_path(module_slug, url)
-      route_path = url.delete_prefix(@manifest.fetch("route_base")).sub(%r{\A/}, "").sub(%r{/$}, "")
-      Helpers.generated_collection_path("source_documents", @manifest.fetch("slug"), "#{route_path}.md")
+    def generated_source_module_path(language_slug, module_slug)
+      Helpers.generated_collection_path("source_modules", @manifest.fetch("slug"), language_slug, "#{module_slug}.md")
     end
+
+    def generated_source_document_path(_module_slug, url)
+      route_path = url.sub(%r{\A/}, "").sub(%r{/$}, "")
+      Helpers.generated_collection_path("source_documents", "#{route_path}.md")
+    end
+
+    def build_tree_source_url(source_url_base, relative_path)
+      tree_url_base = source_url_base.sub(%r{/blob/([^/]+)\z}, '/tree/\1')
+      return "" if tree_url_base == source_url_base && @manifest.fetch("source_url").empty?
+
+      base = tree_url_base == source_url_base ? @manifest.fetch("source_url") : tree_url_base
+      relative_path.empty? ? base : "#{base}/#{relative_path}"
+    end
+
   end
 
   class Runner

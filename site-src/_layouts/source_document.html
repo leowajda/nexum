@@ -2,8 +2,7 @@
 layout: default
 ---
 
-{%- assign current_module = site.source_modules | where: "project_slug", page.project_slug | where: "module_slug", page.module_slug | first -%}
-{%- assign current_project = site.projects | where: "slug", page.project_slug | first -%}
+{%- assign current_module = site.source_modules | where: "project_slug", page.project_slug | where: "language_slug", page.language_slug | where: "module_slug", page.module_slug | first -%}
 {%- assign current_document = page -%}
 
 {%- if current_module == nil or current_document.document_id == nil -%}
@@ -12,13 +11,15 @@ layout: default
   <article class="source-layout">
     <header class="page-header page-header--hero source-page-header">
       <p class="page-eyebrow source-page-header__eyebrow">
-        {%- if current_project and current_project.entry_url != "" -%}
-          <a href="{{ current_project.entry_url | relative_url }}">{{ current_project.title }}</a>
+        {%- if current_document.project_url != "" -%}
+          <a href="{{ current_document.project_url | relative_url }}">{{ current_document.project_title }}</a>
         {%- else -%}
-          <span>{{ current_project.title }}</span>
+          <span>{{ current_document.project_title }}</span>
         {%- endif -%}
         <span>/</span>
-        <a href="{{ current_module.url | relative_url }}">{{ current_module.title }}</a>
+        <a href="{{ current_document.language_url | relative_url }}">{{ current_document.language_title }}</a>
+        <span>/</span>
+        <a href="{{ current_module.url | relative_url }}">{{ current_document.module_title }}</a>
       </p>
       <h1>{{ current_document.title }}</h1>
       <div class="page-meta">
@@ -29,7 +30,7 @@ layout: default
 
     <div class="source-layout__body">
       <aside class="source-layout__sidebar">
-        {%- include source_sidebar.html module=current_module project_title=current_project.title project_url=current_project.entry_url -%}
+        {%- include source_sidebar.html module=current_module project_title=current_document.project_title project_url=current_document.project_url language_title=current_document.language_title language_url=current_document.language_url -%}
       </aside>
 
       {%- if current_document.format == "code" -%}
@@ -50,9 +51,6 @@ layout: default
               </ol>
             </nav>
           {%- endif -%}
-          <div class="content-card__meta source-document-meta">
-            <span class="source-document-meta__path" title="{{ current_document.source_path }}">{{ current_document.source_path }}</span>
-          </div>
           <div class="action-links">
             <button type="button" data-code-copy-button data-copy-default-label="copy">copy</button>
           </div>
@@ -76,9 +74,6 @@ layout: default
               </ol>
             </nav>
           {%- endif -%}
-          <div class="content-card__meta source-document-meta">
-            <span class="source-document-meta__path" title="{{ current_document.source_path }}">{{ current_document.source_path }}</span>
-          </div>
           {{ content }}
         </section>
       {%- endif -%}

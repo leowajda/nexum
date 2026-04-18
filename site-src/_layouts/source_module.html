@@ -3,7 +3,6 @@ layout: default
 ---
 
 {%- assign current_module = page -%}
-{%- assign current_project = site.projects | where: "slug", page.project_slug | first -%}
 {%- assign page_content = content | strip -%}
 
 {%- if current_module.roots == nil -%}
@@ -12,21 +11,20 @@ layout: default
   <article class="source-layout">
     <header class="page-header page-header--hero source-page-header">
       <p class="page-eyebrow">
-        {%- if current_project and current_project.entry_url != "" -%}
-          <a href="{{ current_project.entry_url | relative_url }}">{{ current_project.title }}</a>
+        {%- if current_module.project_url != "" -%}
+          <a href="{{ current_module.project_url | relative_url }}">{{ current_module.project_title }}</a>
         {%- else -%}
-          {{ current_project.title }}
+          {{ current_module.project_title }}
         {%- endif -%}
+        <span>/</span>
+        <a href="{{ current_module.language_url | relative_url }}">{{ current_module.language_title }}</a>
       </p>
       <h1>{{ current_module.title }}</h1>
-      <div class="page-meta">
-        <span>{{ current_module.language_labels | join: ", " }}</span>
-      </div>
     </header>
 
     <div class="source-layout__body">
       <aside class="source-layout__sidebar">
-        {%- include source_sidebar.html module=current_module project_title=current_project.title project_url=current_project.entry_url -%}
+        {%- include source_sidebar.html module=current_module project_title=current_module.project_title project_url=current_module.project_url language_title=current_module.language_title language_url=current_module.language_url -%}
       </aside>
 
       {%- if page_content != "" -%}

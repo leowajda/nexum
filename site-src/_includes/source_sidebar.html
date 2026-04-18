@@ -6,6 +6,14 @@
   {%- else -%}
     {{ project_title }}
   {%- endif -%}
+  {%- if include.language_title and include.language_title != "" -%}
+    <span>/</span>
+    {%- if include.language_url and include.language_url != "" -%}
+      <a href="{{ include.language_url | relative_url }}">{{ include.language_title }}</a>
+    {%- else -%}
+      {{ include.language_title }}
+    {%- endif -%}
+  {%- endif -%}
 {%- endcapture -%}
 {%- capture panel_body -%}
   <nav aria-label="Project source navigation">

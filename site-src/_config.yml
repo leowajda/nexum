@@ -33,6 +33,9 @@ collections:
   eureka_implementations:
     output: true
     permalink: /:path/
+  source_languages:
+    output: true
+    permalink: /:path/
   source_modules:
     output: true
     permalink: /:path/
@@ -87,6 +90,14 @@ defaults:
       type: eureka_implementations
     values:
       layout: problem_embed
+      shell: wide
+      seo:
+        type: WebPage
+  - scope:
+      path: ""
+      type: source_languages
+    values:
+      layout: source_language
       shell: wide
       seo:
         type: WebPage

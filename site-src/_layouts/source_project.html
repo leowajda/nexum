@@ -3,7 +3,7 @@ layout: default
 ---
 
 {%- assign current_project = site.projects | where: "slug", page.project_slug | first -%}
-{%- assign modules = site.source_modules | where: "project_slug", page.project_slug | sort: "title" -%}
+{%- assign languages = site.source_languages | where: "project_slug", page.project_slug | sort: "language_title" -%}
 {%- assign project_title = page.title | default: current_project.title -%}
 {%- assign project_description = page.description | default: current_project.description -%}
 
@@ -15,13 +15,13 @@ layout: default
   </header>
 
   <div class="content-stack">
-    {%- for module in modules -%}
+    {%- for language in languages -%}
       <article class="content-card content-card--compact">
-        <h3><a href="{{ module.url | relative_url }}">{{ module.title }}</a></h3>
-        <p>{{ module.language_labels | join: ", " }}</p>
-        {%- if module.source_url != "" -%}
+        <h3><a href="{{ language.url | relative_url }}">{{ language.language_title }}</a></h3>
+        <p>{{ language.description | default: project_description }}</p>
+        {%- if language.source_url != "" -%}
           <div class="content-card__meta">
-            <a href="{{ module.source_url }}" target="_blank" rel="noreferrer">source</a>
+            <a href="{{ language.source_url }}" target="_blank" rel="noreferrer">source</a>
           </div>
         {%- endif -%}
       </article>

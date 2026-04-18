@@ -10,6 +10,7 @@ description: "Algorithm solutions, source notes, and technical writing."
   {%- assign projects = site.projects | sort: "homepage_order" -%}
   {%- for project in projects -%}
     {%- assign project_modules = site.source_modules | where: "project_slug", project.slug | sort: "title" -%}
+    {%- assign project_languages = site.source_languages | where: "project_slug", project.slug | sort: "language_title" -%}
     <article class="content-card content-card--compact">
       {%- if project.entry_url != "" -%}
       <h3><a href="{{ project.entry_url | relative_url }}">{{ project.title }}</a></h3>
@@ -21,7 +22,15 @@ description: "Algorithm solutions, source notes, and technical writing."
         <a href="{{ project.source_url }}" target="_blank" rel="noreferrer">source</a>
       </div>
 
-      {%- if project_modules and project_modules.size > 0 -%}
+      {%- if project.kind == "source-notes" and project_languages and project_languages.size > 0 -%}
+      <ul class="project-collection" aria-label="{{ project.title }} entries">
+        {%- for language in project_languages -%}
+        <li class="project-collection__item">
+          <a class="project-collection__entry" href="{{ language.url | relative_url }}">{{ language.language_title }}</a>
+        </li>
+        {%- endfor -%}
+      </ul>
+      {%- elsif project_modules and project_modules.size > 0 -%}
       <ul class="project-collection" aria-label="{{ project.title }} entries">
         {%- for module in project_modules -%}
         <li class="project-collection__item">
