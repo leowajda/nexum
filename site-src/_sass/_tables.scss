@@ -13,6 +13,10 @@
   gap: 0.4rem 0.9rem;
 }
 
+.active-filter-list[hidden] {
+  display: none;
+}
+
 .active-filter {
   background: none;
   border: 0;
