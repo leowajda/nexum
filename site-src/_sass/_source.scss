@@ -61,12 +61,13 @@
 .source-page-header__eyebrow {
   align-items: center;
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 0.45rem;
+  justify-content: flex-start;
   margin: 0;
   min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
+  overflow: visible;
+  white-space: normal;
 }
 
 .source-page-header__eyebrow > * {
@@ -75,11 +76,16 @@
 
 .source-page-header__eyebrow a {
   color: inherit;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
+  max-width: 100%;
   min-width: 0;
   overflow: hidden;
   text-decoration: none;
   text-overflow: ellipsis;
+}
+
+.source-page-header__eyebrow span {
+  opacity: 0.45;
 }
 
 .source-page-header__eyebrow a:hover {
