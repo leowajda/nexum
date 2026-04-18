@@ -217,19 +217,6 @@
   gap: 1rem;
 }
 
-.problem-toolbar {
-  align-items: baseline;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  row-gap: 0.35rem;
-}
-
-.problem-toolbar__summary {
-  margin: 0;
-  opacity: var(--muted-opacity);
-}
-
 .problem-section__header {
   gap: 0.25rem;
 }

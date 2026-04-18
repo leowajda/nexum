@@ -38,10 +38,7 @@ layout: default
   </aside>
 
   <div class="problem-browser__results">
-    <section class="problem-toolbar">
-      <div class="active-filter-list" data-active-filter-list hidden></div>
-    </section>
-
+    <div class="active-filter-list" data-active-filter-list hidden></div>
     {%- include problems_table.html problems=problems problem_filters=problem_filters page=page -%}
   </div>
 </section>
