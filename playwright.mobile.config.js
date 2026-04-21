@@ -10,7 +10,7 @@ module.exports = defineConfig({
     colorScheme: "light"
   },
   webServer: {
-    command: "ruby -run -e httpd _site -p 4173 -b 127.0.0.1",
+    command: "python3 -m http.server 4173 --bind 127.0.0.1 --directory _site",
     url: "http://127.0.0.1:4173",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000
