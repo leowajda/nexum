@@ -28,9 +28,12 @@ module SiteKit
     end
 
     def load
-      Array(@records).map.with_index do |record, index|
+      manifests = Array(@records).map.with_index do |record, index|
         parse(record, "projects.yml[#{index}]")
       end
+      validate_unique!(manifests, &:slug)
+      validate_unique!(manifests, &:route_base)
+      manifests
     end
 
     private
@@ -60,6 +63,17 @@ module SiteKit
 
     def valid_kinds
       [EUREKA_PROJECT_KIND, SOURCE_NOTES_PROJECT_KIND]
+    end
+
+    def validate_unique!(manifests)
+      duplicate_values = manifests
+        .map { |manifest| yield(manifest) }
+        .group_by(&:itself)
+        .select { |_, values| values.size > 1 }
+        .keys
+      return if duplicate_values.empty?
+
+      raise "Project manifest values must be unique: #{duplicate_values.join(', ')}"
     end
   end
 end

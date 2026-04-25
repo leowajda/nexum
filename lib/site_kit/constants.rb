@@ -13,12 +13,6 @@ module SiteKit
   SOURCE_MODULE_PAGE_TYPE = "source_module_page"
   SOURCE_DOCUMENT_PAGE_TYPE = "source_document_page"
 
-  STRUCTURED_DATA_POST_PARTIAL = "structured_data/post.html"
-  STRUCTURED_DATA_HOME_PARTIAL = "structured_data/home.html"
-  STRUCTURED_DATA_PROBLEMS_PARTIAL = "structured_data/problems.html"
-  STRUCTURED_DATA_PROBLEM_PARTIAL = "structured_data/problem.html"
-  STRUCTURED_DATA_WRITING_PARTIAL = "structured_data/writing_page.html"
-  STRUCTURED_DATA_SOURCE_MODULE_PARTIAL = "structured_data/source_module.html"
   STRUCTURED_DATA_SOURCE_DOCUMENT_PARTIAL = "structured_data/source_document.html"
   STRUCTURED_DATA_SOURCE_DOCUMENT_CODE_PARTIAL = "structured_data/source_document_code.html"
 end

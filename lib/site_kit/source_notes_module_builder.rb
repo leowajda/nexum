@@ -15,7 +15,7 @@ module SiteKit
     end
 
     def build(module_definition:, language_context:)
-      absolute_path = repo_root.join(module_definition.path)
+      absolute_path = source_path(module_definition.path, "Module '#{module_definition.slug}' path")
       raise "Module '#{module_definition.slug}' is missing at '#{absolute_path}'" unless absolute_path.directory?
 
       documents = build_documents(module_definition, absolute_path, language_context)
@@ -56,8 +56,8 @@ module SiteKit
     attr_reader :app_config, :manifest, :source_url_base, :repo_root, :document_builder
 
     def build_documents(module_definition, absolute_path, language_context)
-      module_definition.source_roots.flat_map do |root_label|
-        absolute_root = absolute_path.join(root_label)
+      documents = module_definition.source_roots.flat_map do |root_label|
+        absolute_root = source_path(File.join(module_definition.path, root_label), "Module '#{module_definition.slug}' root '#{root_label}'")
         raise "Module '#{module_definition.slug}' root '#{root_label}' is missing at '#{absolute_root}'" unless absolute_root.directory?
 
         walk_text_files(absolute_root).map do |file_path|
@@ -70,6 +70,8 @@ module SiteKit
           )
         end
       end
+      validate_unique_document_routes!(module_definition, documents)
+      documents
     end
 
     def walk_text_files(directory)
@@ -105,5 +107,23 @@ module SiteKit
       end
     end
 
+    def validate_unique_document_routes!(module_definition, documents)
+      duplicate_routes = documents
+        .map { |document| document.fetch("route_url") }
+        .group_by(&:itself)
+        .select { |_, routes| routes.size > 1 }
+        .keys
+      return if duplicate_routes.empty?
+
+      raise "Module '#{module_definition.slug}' document routes must be unique: #{duplicate_routes.join(', ')}"
+    end
+
+    def source_path(relative_path, context)
+      path = repo_root.join(relative_path).expand_path
+      root = repo_root.expand_path.to_s
+      return path if path.to_s == root || path.to_s.start_with?("#{root}#{File::SEPARATOR}")
+
+      raise "#{context} escapes the source root"
+    end
   end
 end

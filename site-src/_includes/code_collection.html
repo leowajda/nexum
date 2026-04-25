@@ -3,6 +3,20 @@
 {%- if items and items.size > 0 -%}
   {%- assign collection_id = include.collection_id | default: '' -%}
   {%- assign default_entry_id = collection.default_entry_id | default: items.first.entry_id -%}
+  {%- assign default_language_slug = '' -%}
+  {%- assign default_variant_slug = '' -%}
+  {%- for item in items -%}
+    {%- if item.entry_id == default_entry_id -%}
+      {%- assign default_language_slug = item.language_slug -%}
+      {%- assign default_variant_slug = item.variant_slug -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- if default_language_slug == '' -%}
+    {%- assign default_language_slug = items.first.language_slug -%}
+  {%- endif -%}
+  {%- if default_variant_slug == '' -%}
+    {%- assign default_variant_slug = items.first.variant_slug -%}
+  {%- endif -%}
   {%- assign sync_hash = collection.sync_hash -%}
   {%- assign toolbar_aria = collection.toolbar_aria | default: 'Code collection' -%}
   {%- assign toolbar_groups = collection.toolbar_groups -%}
@@ -29,13 +43,20 @@
               {% if group.kind == "variant" %}data-code-collection-variant-group{% endif %}
             >
               {%- for control in group.controls -%}
+                {%- assign control_active = false -%}
+                {%- if group.kind == "language" and control.slug == default_language_slug -%}
+                  {%- assign control_active = true -%}
+                {%- elsif group.kind == "variant" and control.slug == default_variant_slug -%}
+                  {%- assign control_active = true -%}
+                {%- endif -%}
                 <button
                   type="button"
-                  class="code-collection__option{% if control.icon_only %} code-collection__option--icon{% endif %}"
+                  class="control-button code-collection__option{% if control.icon_only %} control-button--icon code-collection__option--icon{% endif %}{% if control_active %} is-active{% endif %}"
                   data-code-collection-{{ group.kind }}-control
                   data-code-collection-{{ group.kind }}="{{ control.slug | escape }}"
                   data-code-collection-target-entry="{{ control.target_entry_id | escape }}"
                   {% if group.kind == "variant" %}data-code-collection-variant-label="{{ control.label | escape }}"{% endif %}
+                  aria-pressed="{{ control_active }}"
                   aria-label="{{ control.label }}"
                   title="{{ control.label }}"
                 >
@@ -52,7 +73,11 @@
 
         <div class="code-panel__actions code-collection__actions">
           {%- for action_group in entry_action_groups -%}
-            <div class="code-collection__entry-actions" data-code-collection-actions-for="{{ action_group.entry_id | escape }}" hidden>
+            {%- assign action_group_hidden = true -%}
+            {%- if action_group.entry_id == default_entry_id -%}
+              {%- assign action_group_hidden = false -%}
+            {%- endif -%}
+            <div class="code-collection__entry-actions" data-code-collection-actions-for="{{ action_group.entry_id | escape }}"{% if action_group_hidden %} hidden{% endif %}>
               {%- for action in action_group.actions -%}
                 {%- include icon_action.html action=action -%}
               {%- endfor -%}
@@ -66,6 +91,10 @@
 
         <div class="code-panel__body code-block__content" data-code-source>
         {%- for item in items -%}
+          {%- assign item_hidden = true -%}
+          {%- if item.entry_id == default_entry_id -%}
+            {%- assign item_hidden = false -%}
+          {%- endif -%}
           <div
             class="code-collection__item"
             data-code-collection-item
@@ -73,7 +102,7 @@
             data-code-collection-language="{{ item.language_slug | escape }}"
             data-code-collection-variant="{{ item.variant_slug | escape }}"
             id="{{ item.entry_id | escape }}"
-            hidden
+            {% if item_hidden %}hidden{% endif %}
           >
             {%- if item.code -%}
               {%- capture code_block -%}

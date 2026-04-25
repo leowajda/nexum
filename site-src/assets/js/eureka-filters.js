@@ -3,15 +3,7 @@ import {
   matchesProblemRow,
   reduceProblemTableState
 } from "./eureka-problem-table-state.js"
-
-const onReady = (callback) => {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", callback, { once: true })
-    return
-  }
-
-  callback()
-}
+import { onReady } from "./dom.js"
 
 const queryCheckedRadio = (form, name) =>
   form.querySelector(`input[name="${name}"]:checked`)?.value ?? ""
@@ -51,8 +43,6 @@ const initializeProblemFilters = () => {
     return
   }
 
-  const summaryVisible = document.querySelector("[data-visible-count]")
-  const summaryTotal = document.querySelector("[data-total-count]")
   const activeFilterList = document.querySelector("[data-active-filter-list]")
   const searchInput = form.querySelector('input[name="search"]')
   const languageInputs = Array.from(form.querySelectorAll('input[name="language"]'))
@@ -170,25 +160,12 @@ const initializeProblemFilters = () => {
       state = reduceProblemTableState(state, { type: "category", value: category })
     }
 
-    let visibleCount = 0
-
     rows.forEach((row) => {
       const matchesLanguage = selectedLanguages.length === 0
         || row.languages.some((language) => selectedLanguages.includes(language))
       const matches = matchesProblemRow(state, row) && matchesLanguage
       row.element.hidden = !matches
-      if (matches) {
-        visibleCount += 1
-      }
     })
-
-    if (summaryVisible) {
-      summaryVisible.textContent = String(visibleCount)
-    }
-
-    if (summaryTotal) {
-      summaryTotal.textContent = String(rows.length)
-    }
 
     renderActiveFilters(state)
   }

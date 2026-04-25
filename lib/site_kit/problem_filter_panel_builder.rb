@@ -2,35 +2,20 @@
 
 module SiteKit
   class ProblemFilterPanelBuilder
-    NAVIGATION_PAGES = {
-      "algorithmic_flowchart" => "Algorithmic Flowchart",
-      "algorithmic_templates" => "Algorithmic Templates"
-    }.freeze
-
-    def initialize(browser:, active_language:, site_pages:)
+    def initialize(browser:, active_language:)
       @browser = browser
       @active_language = active_language
-      @site_pages = site_pages
     end
 
     def build
       {
-        "sections" => [navigation_section, search_section, *language_sections, difficulty_section, category_section].compact
+        "sections" => [search_section, *language_sections, difficulty_section, category_section].compact
       }
     end
 
     private
 
-    attr_reader :browser, :active_language, :site_pages
-
-    def navigation_section
-      section(
-        kind: "links",
-        title: "Navigate",
-        aria_label: "Eureka navigation",
-        links: NAVIGATION_PAGES.map { |key, label| link_item(label:, url: site_page_url(key)) }
-      )
-    end
+    attr_reader :browser, :active_language
 
     def search_section
       section(
@@ -127,10 +112,6 @@ module SiteKit
 
     def choice_item(value:, label:, checked: nil, class_name: nil)
       record(value:, label:, checked:, class: class_name)
-    end
-
-    def site_page_url(key)
-      site_pages.fetch(key).fetch("url")
     end
 
     def record(**attributes)

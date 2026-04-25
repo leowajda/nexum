@@ -112,6 +112,8 @@ defaults:
     values:
       layout: problem_embed
       shell: wide
+      noindex: true
+      sitemap: false
       seo:
         type: WebPage
   - scope:
@@ -120,6 +122,7 @@ defaults:
     values:
       layout: redirect
       shell: wide
+      sitemap: false
       seo:
         type: WebPage
   - scope:

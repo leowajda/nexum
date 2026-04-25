@@ -1,8 +1,4 @@
-.filter-summary,
-.problem-title__slug,
 .code-panel__meta,
-.references__path,
-.problem-section__header p,
 .solution-empty {
   opacity: var(--muted-opacity);
 }
@@ -128,13 +124,6 @@
   gap: 0.45rem;
 }
 
-.meta-list,
-.solution-list,
-.references__list {
-  margin: 0;
-  padding-left: 1.25rem;
-}
-
 .tag-list {
   align-items: flex-start;
   display: flex;
@@ -185,11 +174,6 @@
 .difficulty-badge--hard {
   background: transparent;
   border-style: dashed;
-}
-
-.solution-list li,
-.references__item {
-  margin: 0.2rem 0;
 }
 
 .solution-chip-list {

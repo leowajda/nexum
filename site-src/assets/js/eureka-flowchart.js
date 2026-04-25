@@ -1,11 +1,4 @@
-const onReady = (callback) => {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", callback, { once: true })
-    return
-  }
-
-  callback()
-}
+import { getHashValue, onReady, replaceHashValue } from "./dom.js"
 
 const parseNumber = (value, fallback = 0) => {
   const parsed = Number.parseFloat(value || "")
@@ -20,15 +13,8 @@ const queryTemplate = (root, nodeId) =>
 const queryNodeButton = (root, nodeId) =>
   root.querySelector(`[data-flowchart-node-id="${CSS.escape(nodeId)}"]`)
 
-const getHashNodeId = () => {
-  const hash = window.location.hash.replace(/^#/, "")
-  return hash ? decodeURIComponent(hash) : ""
-}
-
 const replaceHash = (nodeId) => {
-  const nextUrl = new URL(window.location.href)
-  nextUrl.hash = nodeId ? encodeURIComponent(nodeId) : ""
-  window.history.replaceState({}, "", nextUrl)
+  replaceHashValue(nodeId)
 }
 
 const renderMathIn = (element) => {
@@ -143,7 +129,7 @@ const buildNoteSummary = (prose) => {
 const createInspectorTab = (label, panelName) => {
   const button = document.createElement("button")
   button.type = "button"
-  button.className = "flowchart-inspector__tab"
+  button.className = "control-button flowchart-inspector__tab"
   button.dataset.flowchartTab = panelName
   button.textContent = label
   return button
@@ -726,7 +712,7 @@ const initializeFlowchart = (root) => {
   })
 
   window.addEventListener("hashchange", () => {
-    const hashNodeId = getHashNodeId()
+    const hashNodeId = getHashValue()
     if (hashNodeId && queryNodeButton(root, hashNodeId)) {
       commitSelection(hashNodeId, { scroll: true, updateHash: false })
       return
@@ -745,7 +731,7 @@ const initializeFlowchart = (root) => {
 
   syncScale()
 
-  const hashNodeId = getHashNodeId()
+  const hashNodeId = getHashValue()
   if (hashNodeId && queryNodeButton(root, hashNodeId)) {
     commitSelection(hashNodeId, { scroll: false, updateHash: false })
     window.requestAnimationFrame(() => {

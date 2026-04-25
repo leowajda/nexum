@@ -18,12 +18,19 @@ layout: default
       <nav class="template-library__groups" aria-label="Template families">
         {%- for group in template_groups -%}
           {%- assign first_group_template = group.templates | first -%}
+          {%- assign group_is_default = false -%}
+          {%- for template in group.templates -%}
+            {%- if template.template_id == default_template_id -%}
+              {%- assign group_is_default = true -%}
+            {%- endif -%}
+          {%- endfor -%}
           <button
             type="button"
-            class="template-library__group"
+            class="control-button template-library__group{% if group_is_default %} template-library__group--active{% endif %}"
             data-template-group-control
             data-template-group="{{ group.id }}"
             data-template-target="{{ first_group_template.template_id }}"
+            aria-pressed="{{ group_is_default }}"
           >
             {{ group.title }}
           </button>
@@ -31,15 +38,26 @@ layout: default
       </nav>
 
       {%- for group in template_groups -%}
-        <section class="template-library__group-panel" data-template-group-tabs="{{ group.id }}" hidden>
+        {%- assign group_is_default = false -%}
+        {%- for template in group.templates -%}
+          {%- if template.template_id == default_template_id -%}
+            {%- assign group_is_default = true -%}
+          {%- endif -%}
+        {%- endfor -%}
+        <section class="template-library__group-panel" data-template-group-tabs="{{ group.id }}"{% unless group_is_default %} hidden{% endunless %}>
           <nav class="template-library__tabs" aria-label="{{ group.title }} templates">
             {%- for template in group.templates -%}
+              {%- assign template_is_default = false -%}
+              {%- if template.template_id == default_template_id -%}
+                {%- assign template_is_default = true -%}
+              {%- endif -%}
               <button
                 type="button"
-                class="template-library__tab"
+                class="control-button template-library__tab{% if template_is_default %} template-library__tab--active{% endif %}"
                 data-template-nav
                 data-template-group="{{ group.id }}"
                 data-template-target="{{ template.template_id }}"
+                aria-pressed="{{ template_is_default }}"
               >
                 {{ template.title }}
               </button>

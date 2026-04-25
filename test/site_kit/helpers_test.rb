@@ -30,4 +30,33 @@ class SiteKitHelpersTest < SiteKitTestCase
       assert_includes rewritten, "/cover.png"
     end
   end
+
+  def test_rewrite_markdown_images_preserves_titles_and_angle_references
+    Dir.mktmpdir do |directory|
+      File.write(File.join(directory, "cover image.png"), "placeholder")
+
+      rewritten = SiteKit::Helpers.rewrite_markdown_images(
+        "![Cover](<cover image.png> \"Cover image\")",
+        directory,
+        "https://github.com/example/repo/blob/main",
+        source_root: directory
+      )
+
+      assert_includes rewritten, "https://raw.githubusercontent.com/example/repo/main/"
+      assert_includes rewritten, "cover image.png"
+      assert_includes rewritten, "\"Cover image\""
+    end
+  end
+
+  def test_parse_yaml_rejects_duplicate_mapping_keys
+    error = assert_raises(RuntimeError) do
+      SiteKit::Helpers.parse_yaml("title: First\ntitle: Second\n", "Duplicate fixture")
+    end
+
+    assert_match(/Duplicate mapping key 'title'/, error.message)
+  end
+
+  def test_slugify_collapses_and_trims_separators
+    assert_equal "hello-world", SiteKit::Helpers.slugify(" Hello,   World! ")
+  end
 end

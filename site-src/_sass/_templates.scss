@@ -26,25 +26,7 @@
   padding-left: 1rem;
 }
 
-.template-library__group,
-.template-library__tab {
-  align-items: center;
-  appearance: none;
-  background: var(--surface);
-  border: thin solid var(--border);
-  color: inherit;
-  cursor: pointer;
-  display: inline-flex;
-  font: inherit;
-  justify-content: center;
-  min-height: 2.5rem;
-  padding: 0.45rem 0.8rem;
-  text-decoration: none;
-}
-
-.template-library__group:hover,
 .template-library__group--active,
-.template-library__tab:hover,
 .template-library__tab--active {
   background: var(--accent-surface);
   color: var(--accent-text);

@@ -1,19 +1,4 @@
-const onReady = (callback) => {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", callback, { once: true })
-    return
-  }
-
-  callback()
-}
-
-const getHashTemplateId = () => window.location.hash.replace(/^#/, "")
-
-const setHashTemplateId = (templateId) => {
-  const nextUrl = new URL(window.location.href)
-  nextUrl.hash = templateId
-  window.history.replaceState({}, "", nextUrl)
-}
+import { getHashValue, onReady, replaceHashValue } from "./dom.js"
 
 const initializeTemplateLibrary = (root) => {
   const panels = Array.from(root.querySelectorAll("[data-template-panel]"))
@@ -76,7 +61,7 @@ const initializeTemplateLibrary = (root) => {
     renderLanguage(nextPanel, activeLanguage)
 
     if (updateHash) {
-      setHashTemplateId(nextTemplateId)
+      replaceHashValue(nextTemplateId)
     }
   }
 
@@ -106,14 +91,14 @@ const initializeTemplateLibrary = (root) => {
   })
 
   window.addEventListener("hashchange", () => {
-    const nextTemplateId = decodeURIComponent(getHashTemplateId())
+    const nextTemplateId = getHashValue()
     if (nextTemplateId) {
       renderTemplate(nextTemplateId, { updateHash: false })
     }
   })
 
-  const initialTemplateId = decodeURIComponent(getHashTemplateId()) || defaultTemplateId
-  renderTemplate(initialTemplateId, { updateHash: !getHashTemplateId() })
+  const initialTemplateId = getHashValue() || defaultTemplateId
+  renderTemplate(initialTemplateId, { updateHash: !getHashValue() })
 }
 
 onReady(() => {
