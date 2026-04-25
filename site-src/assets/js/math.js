@@ -1,11 +1,4 @@
-const onReady = (callback) => {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", callback, { once: true })
-    return
-  }
-
-  callback()
-}
+import { onReady } from "./dom.js"
 
 onReady(() => {
   if (typeof window.renderMathInElement !== "function") {

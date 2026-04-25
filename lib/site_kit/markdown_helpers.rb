@@ -4,7 +4,7 @@ module SiteKit
   module MarkdownHelpers
     extend self
 
-    MARKDOWN_IMAGE_PATTERN = /!\[([^\]]*)\]\(([^)]+)\)/
+    MARKDOWN_IMAGE_PATTERN = /!\[[^\]]*\]\((?<reference><[^>]+>|[^)\s]+)(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?\)/
 
     def raw_github_url(source_url_base, relative_path)
       return "" if source_url_base.to_s.empty?
@@ -20,25 +20,27 @@ module SiteKit
     def rewrite_markdown_images(markdown, base_directory, source_url_base, source_root: Helpers.repo_root)
       return markdown.to_s.strip if markdown.to_s.empty?
 
-      rewritten = markdown.dup
-      markdown.to_enum(:scan, MARKDOWN_IMAGE_PATTERN).map { Regexp.last_match }.each do |match|
-        raw_reference = sanitize_asset_path(match[2].to_s)
-        next if raw_reference.empty? || raw_reference.start_with?("http://", "https://", "/")
+      rewritten = markdown.to_s.gsub(MARKDOWN_IMAGE_PATTERN) do |match_text|
+        reference = Regexp.last_match[:reference].to_s
+        raw_reference = sanitize_asset_path(reference)
+        next match_text if raw_reference.empty? || raw_reference.start_with?("http://", "https://", "/")
 
         source_path = File.expand_path(raw_reference, base_directory)
-        next unless File.exist?(source_path)
+        next match_text unless File.exist?(source_path)
 
         relative_asset_path = Helpers.relative_path(source_root, source_path)
         public_reference = raw_github_url(source_url_base, relative_asset_path)
-        rewritten.gsub!("](#{raw_reference})", "](#{public_reference})")
-        rewritten.gsub!("](<#{raw_reference}>)", "](#{public_reference})")
+        match_text.sub(reference, public_reference)
       end
 
       rewritten.strip
     end
 
     def sanitize_asset_path(raw_path)
-      raw_path.gsub(/\A<|>\z/, "").split(/\s+/).first.to_s
+      path = raw_path.to_s.strip
+      return path[1...-1].to_s if path.start_with?("<") && path.end_with?(">")
+
+      path.split(/\s+/).first.to_s
     end
   end
 end

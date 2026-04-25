@@ -61,11 +61,13 @@ module SiteKit
     end
 
     def load
-      AppConfig.new(
+      config = AppConfig.new(
         eureka: section_record(AppEurekaConfig, "eureka", EUREKA_SCHEMA),
         source_notes: section_record(AppSourceNotesConfig, "source_notes", SOURCE_NOTES_SCHEMA),
         code_collection: section_record(AppCodeCollectionConfig, "code_collection", CODE_COLLECTION_SCHEMA)
       )
+      validate_text_file_metadata!(config.source_notes.text_file_metadata)
+      config
     end
 
     private
@@ -115,6 +117,22 @@ module SiteKit
     def string_hash(value, context)
       Helpers.ensure_hash(value, context).to_h do |key, entry|
         [Helpers.ensure_string(key, "#{context} key"), Helpers.ensure_string(entry, "#{context}.#{key}")]
+      end
+    end
+
+    def validate_text_file_metadata!(metadata)
+      metadata.each do |extension, record|
+        raise "source_notes.text_file_metadata key '#{extension}' must start with ." unless extension.start_with?(".")
+
+        format = record.fetch("format")
+        unless %w[code markdown].include?(format)
+          raise "source_notes.text_file_metadata.#{extension}.format must be code or markdown"
+        end
+
+        syntax = record.fetch("syntax")
+        if format == "code" && syntax.empty?
+          raise "source_notes.text_file_metadata.#{extension}.syntax must not be empty for code files"
+        end
       end
     end
   end

@@ -29,11 +29,7 @@
   --muted-opacity: 0.75;
 }
 
-html[a="light"] {
-  color-scheme: light;
-}
-
-html[a="dark"] {
+@mixin dark-theme {
   color-scheme: dark;
   --surface: #111;
   --surface-muted: #1b1b1b;
@@ -51,23 +47,17 @@ html[a="dark"] {
   --code-name: #f0f6fc;
 }
 
+html[a="light"] {
+  color-scheme: light;
+}
+
+html[a="dark"] {
+  @include dark-theme;
+}
+
 @media (prefers-color-scheme: dark) {
   html[a="auto"] {
-    color-scheme: dark;
-    --surface: #111;
-    --surface-muted: #1b1b1b;
-    --text: #fff;
-    --border: #fff;
-    --code-surface: #1a1a1a;
-    --accent-surface: #fff;
-    --accent-text: #111;
-    --code-comment: #8b949e;
-    --code-keyword: #ff7b72;
-    --code-type: #d2a8ff;
-    --code-function: #79c0ff;
-    --code-string: #a5d6a7;
-    --code-number: #ffa657;
-    --code-name: #f0f6fc;
+    @include dark-theme;
   }
 }
 
@@ -206,8 +196,7 @@ img {
 
 .site-nav__links,
 .site-nav__actions,
-.active-filter-list,
-.problem-toolbar {
+.active-filter-list {
   align-items: center;
   display: flex;
   flex-wrap: wrap;
@@ -215,27 +204,54 @@ img {
 
 .site-nav__links,
 .site-nav__actions,
-.active-filter-list,
-.problem-toolbar {
+.active-filter-list {
   gap: 0.75rem;
 }
 
-.filter-button {
+.control-button {
+  appearance: none;
   align-items: center;
   background: var(--surface);
-  border: 1px solid currentColor;
+  border: thin solid var(--border);
   color: inherit;
+  cursor: pointer;
   display: inline-flex;
+  font: inherit;
   gap: 0.5rem;
   justify-content: center;
-  min-height: 2.75rem;
+  min-height: 2.5rem;
   padding: 0.45rem 0.8rem;
   text-decoration: none;
 }
 
-.filter-button:hover {
+.control-button--icon {
+  min-width: 2.5rem;
+  padding: 0.45rem;
+}
+
+.control-button:hover,
+.control-button.is-active,
+.control-button[aria-pressed="true"] {
   background: var(--accent-surface);
   color: var(--accent-text);
+}
+
+.control-button:disabled,
+.control-button.is-unavailable {
+  background: var(--surface);
+  color: inherit;
+  cursor: default;
+  opacity: 0.38;
+}
+
+.control-button:disabled:hover,
+.control-button.is-unavailable:hover {
+  background: var(--surface);
+  color: inherit;
+}
+
+.filter-button {
+  min-height: 2.75rem;
 }
 
 .icon-action {

@@ -35,6 +35,8 @@ module SiteKit
         context.template_library_context.code_collections
         context.template_library_context.groups
         context.eureka_context.flowcharts
+        context.site_projects
+        context.generated_pages
         context.eureka_context.projects.each_value do |project|
           project.generated_language_pages
           project.generated_problem_pages

@@ -16,8 +16,7 @@ module SiteKit
       document.data["header_links"] = page_link_resolver.links_for("problem_explorer")
       document.data["problem_filter_panel"] = ProblemFilterPanelBuilder.new(
         browser: browser,
-        active_language: active_language,
-        site_pages: page_link_resolver_links
+        active_language: active_language
       ).build
       document.data["problem_table"] = ProblemTableBuilder.new(
         browser: browser,
@@ -28,13 +27,6 @@ module SiteKit
     private
 
     attr_reader :eureka_browsers, :page_link_resolver
-
-    def page_link_resolver_links
-      {
-        "algorithmic_flowchart" => page_link_resolver.page_link("algorithmic_flowchart"),
-        "algorithmic_templates" => page_link_resolver.page_link("algorithmic_templates")
-      }
-    end
 
     def active_language_record(browser, language_filter)
       return nil if language_filter.to_s.empty?

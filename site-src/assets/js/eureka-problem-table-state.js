@@ -47,6 +47,8 @@ export const reduceProblemTableState = (state, action) => {
       }
     case "clear":
       return createProblemTableState(action.defaultLanguage)
+    default:
+      return state
   }
 }
 
@@ -55,9 +57,3 @@ export const matchesProblemRow = (state, row) =>
   && (!state.difficulty || row.difficulty === state.difficulty)
   && (!state.language || row.languages.includes(state.language))
   && (state.categories.size === 0 || row.categories.some((category) => state.categories.has(category)))
-
-export const isSingleSelectButtonActive = (state, kind, value) =>
-  state[kind] === value || (!state[kind] && value === "")
-
-export const isCategoryButtonActive = (state, value) =>
-  value === "" ? state.categories.size === 0 : state.categories.has(value)

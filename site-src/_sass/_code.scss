@@ -38,20 +38,6 @@
   padding-left: 0.6rem;
 }
 
-.code-collection__option {
-  align-items: center;
-  appearance: none;
-  background: var(--surface);
-  border: thin solid var(--border);
-  color: inherit;
-  cursor: pointer;
-  display: inline-flex;
-  font: inherit;
-  justify-content: center;
-  min-height: 2.5rem;
-  padding: 0.45rem 0.8rem;
-}
-
 .code-collection__option--icon {
   min-width: 2.5rem;
   padding: 0.45rem;
@@ -59,26 +45,6 @@
 
 .code-collection__option-icon {
   font-size: 1.2rem;
-}
-
-.code-collection__option:hover,
-.code-collection__option.is-active {
-  background: var(--accent-surface);
-  color: var(--accent-text);
-}
-
-.code-collection__option:disabled,
-.code-collection__option.is-unavailable {
-  background: var(--surface);
-  color: inherit;
-  cursor: default;
-  opacity: 0.38;
-}
-
-.code-collection__option:disabled:hover,
-.code-collection__option.is-unavailable:hover {
-  background: var(--surface);
-  color: inherit;
 }
 
 .code-collection__actions,

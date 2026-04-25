@@ -11,7 +11,7 @@ module SiteKit
     end
 
     def load(problem_slug:, problem_title:, problem_source_url:, raw_implementations:)
-      Helpers.ensure_array(raw_implementations, "Problem '#{problem_slug}'.implementations").map.with_index do |implementation, index|
+      implementations = Helpers.ensure_array(raw_implementations, "Problem '#{problem_slug}'.implementations").map.with_index do |implementation, index|
         build_implementation(
           problem_slug: problem_slug,
           problem_title: problem_title,
@@ -20,6 +20,8 @@ module SiteKit
           index: index
         )
       end
+      validate_unique_implementation_ids!(problem_slug, implementations)
+      implementations
     end
 
     private
@@ -43,7 +45,11 @@ module SiteKit
         raw_implementation.fetch("file_path"),
         "Problem '#{problem_slug}'.implementations[#{index}].file_path"
       )
-      code_path = source_root.join(file_path)
+      code_path = source_root.join(file_path).expand_path
+      source_root_path = source_root.expand_path.to_s
+      unless code_path.to_s == source_root_path || code_path.to_s.start_with?("#{source_root_path}#{File::SEPARATOR}")
+        raise "Problem '#{problem_slug}' implementation #{index} file_path escapes the source root"
+      end
       raise "Eureka implementation source is missing: '#{code_path}'" unless code_path.exist?
 
       code = Helpers.read_text(code_path)
@@ -64,6 +70,17 @@ module SiteKit
         code_language: language.code_language,
         route_base: route_base
       )
+    end
+
+    def validate_unique_implementation_ids!(problem_slug, implementations)
+      duplicate_ids = implementations
+        .map(&:implementation_id)
+        .group_by(&:itself)
+        .select { |_, ids| ids.size > 1 }
+        .keys
+      return if duplicate_ids.empty?
+
+      raise "Problem '#{problem_slug}' implementation ids must be unique: #{duplicate_ids.join(', ')}"
     end
   end
 end

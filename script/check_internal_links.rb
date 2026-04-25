@@ -2,12 +2,12 @@
 # frozen_string_literal: true
 
 require "cgi"
+require "bundler/setup"
+require "nokogiri"
 require "pathname"
+require "set"
 
 SITE_DIR = File.expand_path("../_site", __dir__)
-HREF_PATTERN = /href=(["'])(.*?)\1/i
-ID_PATTERN = /\sid=(["'])(.*?)\1/i
-NAME_PATTERN = /\sname=(["'])(.*?)\1/i
 IGNORED_SCHEMES = %w[http:// https:// mailto: tel: javascript: data:].freeze
 
 def html_files
@@ -16,9 +16,14 @@ end
 
 def anchor_targets(path)
   content = File.read(path)
-  ids = content.scan(ID_PATTERN).map { |_quote, id| id }.to_set
-  names = content.scan(NAME_PATTERN).map { |_quote, name| name }.to_set
-  [content, ids | names]
+  document = Nokogiri::HTML(content)
+  ids = document.css("[id]").filter_map { |node| node["id"] }.to_set
+  names = document.css("[name]").filter_map { |node| node["name"] }.to_set
+  ids | names
+end
+
+def hrefs(path)
+  Nokogiri::HTML(File.read(path)).css("[href]").filter_map { |node| node["href"] }
 end
 
 def internal_href?(href)
@@ -56,15 +61,11 @@ def resolve_path(current_file, href)
 end
 
 def collect_failures
-  require "set"
-
   cached_targets = {}
   failures = []
 
   html_files.each do |current_file|
-    content = File.read(current_file)
-
-    content.scan(HREF_PATTERN).each do |_quote, raw_href|
+    hrefs(current_file).each do |raw_href|
       href = raw_href.to_s.strip
       next unless internal_href?(href)
 
@@ -77,7 +78,7 @@ def collect_failures
       next if anchor.empty?
 
       cached_targets[target_file] ||= anchor_targets(target_file)
-      _target_content, targets = cached_targets[target_file]
+      targets = cached_targets[target_file]
       next if targets.include?(anchor)
 
       failures << "#{relative_path(current_file)} -> missing anchor #{href}"

@@ -4,22 +4,15 @@
 .content-stack,
 .filters,
 .implementation-list,
-.implementation-stack,
-.problem-section,
-.references,
-.references__group,
 .source-root,
 .source-article,
 .content-card,
 .problem-title,
-.problem-section__header,
 .post-article,
-.card-grid,
 .problem-browser__intro,
 .problem-browser__results,
 .problem-browser,
-.problem-browser-header,
-.problem-jump-card__header {
+.problem-browser-header {
   display: grid;
 }
 
@@ -40,12 +33,6 @@
   max-width: none;
 }
 
-.page-header--hero {
-  background:
-    linear-gradient(135deg, var(--surface-muted), transparent 70%),
-    var(--surface);
-}
-
 .problem-browser-header {
   gap: 0.75rem;
 }
@@ -53,8 +40,7 @@
 .page-eyebrow,
 .section-eyebrow,
 .page-note,
-.page-meta,
- .problem-title__count {
+.page-meta {
   opacity: var(--muted-opacity);
 }
 
@@ -109,35 +95,6 @@
   opacity: 0.45;
 }
 
-.metric-list {
-  display: grid;
-  gap: 0.75rem;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  margin: 0;
-}
-
-.metric-list--compact {
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-}
-
-.metric-list__item {
-  border: thin solid var(--border);
-  display: grid;
-  gap: 0.2rem;
-  margin: 0;
-  padding: 0.8rem;
-}
-
-.metric-list__item dt,
-.metric-list__item dd {
-  margin: 0;
-}
-
-.metric-list__item dd {
-  font-size: 1.35rem;
-  font-weight: bold;
-}
-
 .source-page-header p {
   max-width: none;
 }
@@ -146,17 +103,9 @@
 .problem-page,
 .source-layout,
 .implementation-list,
-.implementation-stack,
-.problem-section,
 .source-article,
-.references,
 .post-article {
   gap: 1rem;
-}
-
-.card-grid {
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
 .content-card {
@@ -206,10 +155,7 @@
 .content-card h2,
 .content-card h3,
 .content-card h4,
-.page-header h1,
-.problem-section__header h2,
-.references h4,
-.references h5 {
+.page-header h1 {
   margin: 0;
 }
 
@@ -308,14 +254,6 @@ textarea:focus-visible {
   gap: 1rem;
 }
 
-.problem-section__header {
-  gap: 0.25rem;
-}
-
-.problem-section__header p {
-  margin: 0;
-}
-
 .source-page-header,
 .source-layout,
 .source-layout__body {
@@ -332,26 +270,6 @@ textarea:focus-visible {
 
 #source-content {
   scroll-margin-top: 1rem;
-}
-
-.jump-link {
-  border: thin solid var(--border);
-  color: inherit;
-  display: inline-flex;
-  gap: 0.5rem;
-  padding: 0.45rem 0.7rem;
-  text-decoration: none;
-}
-
-.jump-link:hover {
-  background: var(--accent-surface);
-  color: var(--accent-text);
-}
-
-.problem-jump-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
 }
 
 @media (max-width: 700px) {

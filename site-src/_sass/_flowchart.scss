@@ -372,17 +372,8 @@
 }
 
 .flowchart-inspector__tab {
-  background: var(--surface);
-  border: thin solid var(--border);
-  color: inherit;
   max-width: 100%;
   min-width: 0;
-  padding: 0.35rem 0.7rem;
-}
-
-.flowchart-inspector__tab.is-active {
-  background: var(--accent-surface);
-  color: var(--accent-text);
 }
 
 .flowchart-inspector__panel[hidden] {

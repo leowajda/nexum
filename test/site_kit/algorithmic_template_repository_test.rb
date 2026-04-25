@@ -11,4 +11,17 @@ class SiteKitAlgorithmicTemplateRepositoryTest < SiteKitTestCase
     assert_equal "Search And Window", template.group_title
     assert_equal ["Binary Search"], template.eureka_categories
   end
+
+  def test_rejects_duplicate_template_group_ids
+    groups = [
+      { "id" => "search", "title" => "Search", "order" => 1 },
+      { "id" => "search", "title" => "Search Again", "order" => 2 }
+    ]
+
+    error = assert_raises(RuntimeError) do
+      SiteKit::AlgorithmicTemplateRepository.new(documents: [], groups:).load
+    end
+
+    assert_match(/Template group ids must be unique: search/, error.message)
+  end
 end

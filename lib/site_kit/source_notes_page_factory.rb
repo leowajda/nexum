@@ -49,7 +49,8 @@ module SiteKit
           "project_slug" => manifest.slug,
           "language_slug" => language.fetch("language_slug"),
           "title" => title,
-          "description" => language_description(title)
+          "description" => language_description(title),
+          "sitemap" => false
         }
       )
     end

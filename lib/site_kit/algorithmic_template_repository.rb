@@ -68,6 +68,8 @@ module SiteKit
       Helpers.ensure_array(groups, "Template groups").each_with_object({}) do |entry, result|
         group = Helpers.ensure_hash(entry, "Template groups[]")
         group_id = Helpers.ensure_string(group["id"], "Template group.id")
+        raise "Template group ids must be unique: #{group_id}" if result.key?(group_id)
+
         result[group_id] = {
           "title" => Helpers.ensure_string(group["title"], "Template group.title"),
           "order" => Helpers.ensure_integer(group["order"], "Template group.order")

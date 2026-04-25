@@ -1,13 +1,6 @@
+import { getHashValue, onReady, replaceHashValue } from "./dom.js"
+
 const themeStorageKey = "leowajda.github.io-theme"
-
-const onReady = (callback) => {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", callback, { once: true })
-    return
-  }
-
-  callback()
-}
 
 const getStoredTheme = () => {
   try {
@@ -180,7 +173,6 @@ const initializeCodeCollections = () => {
     const itemMap = new Map(items.map((item) => [item.dataset.codeCollectionEntryId || "", item]))
     const syncHash = collection.dataset.codeCollectionSyncHash === "true"
     const defaultEntryId = collection.dataset.codeCollectionDefaultEntry || items[0].dataset.codeCollectionEntryId || ""
-    const getHash = () => window.location.hash.replace(/^#/, "")
 
     const resolveItem = (entryId, language, variant) => {
       if (entryId && itemMap.has(entryId)) {
@@ -212,9 +204,7 @@ const initializeCodeCollections = () => {
         return
       }
 
-      const nextUrl = new URL(window.location.href)
-      nextUrl.hash = entryId
-      window.history.replaceState({}, "", nextUrl)
+      replaceHashValue(entryId)
     }
 
     const render = (item) => {
@@ -288,12 +278,12 @@ const initializeCodeCollections = () => {
       })
     })
 
-    const initialItem = resolveItem(syncHash ? decodeURIComponent(getHash()) : "", "", "")
+    const initialItem = resolveItem(syncHash ? getHashValue() : "", "", "")
     render(initialItem)
 
     if (syncHash) {
       window.addEventListener("hashchange", () => {
-        const nextHash = decodeURIComponent(getHash())
+        const nextHash = getHashValue()
         if (!nextHash || !itemMap.has(nextHash)) {
           return
         }

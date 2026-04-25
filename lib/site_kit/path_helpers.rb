@@ -15,7 +15,12 @@ module SiteKit
     end
 
     def slugify(value)
-      value.downcase.gsub(/[^a-z0-9_-]/, "-")
+      value
+        .to_s
+        .downcase
+        .gsub(/[^a-z0-9_-]/, "-")
+        .gsub(/-+/, "-")
+        .gsub(/\A-|-+\z/, "")
     end
 
     def human_label(value)

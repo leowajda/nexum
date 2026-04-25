@@ -69,8 +69,10 @@ module SiteKit
     def build_flowchart_titles
       Helpers.ensure_array(flowchart_data["nodes"], "Flowchart data.nodes").each_with_object({}) do |entry, result|
         node = Helpers.ensure_hash(entry, "Flowchart data node")
-        result[Helpers.ensure_string(node.fetch("id"), "Flowchart data node.id")] =
-          Helpers.ensure_string(node.fetch("title"), "Flowchart data node.title")
+        node_id = Helpers.ensure_string(node.fetch("id"), "Flowchart data node.id")
+        raise "Flowchart node ids must be unique: #{node_id}" if result.key?(node_id)
+
+        result[node_id] = Helpers.ensure_string(node.fetch("title"), "Flowchart data node.title")
       end
     end
   end
