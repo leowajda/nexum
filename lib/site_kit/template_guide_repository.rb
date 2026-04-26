@@ -76,6 +76,7 @@ module SiteKit
         'id' => variant_id,
         'label' => Helpers.ensure_string(variant['label'], "Template guide #{target}.label"),
         'description' => variant['description'].to_s,
+        'signal' => chooser_signal(variant, template),
         'order' => order,
         'pattern_id' => pattern_id,
         'target' => target,
@@ -109,6 +110,13 @@ module SiteKit
         'description' => template.description,
         'code_collection' => code_collections.fetch(template.template_id)
       }
+    end
+
+    def chooser_signal(variant, template)
+      configured = variant.fetch('signal', '').to_s
+      return configured unless configured.empty?
+
+      template&.description.to_s
     end
 
     def default_target(patterns)

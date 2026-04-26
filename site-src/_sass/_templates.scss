@@ -1,7 +1,8 @@
 .template-library,
 .template-library__content,
 .template-library__code,
-.template-panel {
+.template-panel,
+.template-pattern-panel {
   display: grid;
   gap: 1rem;
   min-width: 0;
@@ -102,8 +103,46 @@
 }
 
 .template-panel__header h2,
-.template-panel__header p {
+.template-panel__header p,
+.template-pattern-panel__header h2,
+.template-pattern-panel__header p {
   margin: 0;
+}
+
+.template-pattern-panel__header {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.template-pattern-panel__choices {
+  border: thin solid var(--border);
+  display: grid;
+}
+
+.template-pattern-panel__choice {
+  color: inherit;
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.85rem 1rem;
+  text-decoration: none;
+}
+
+.template-pattern-panel__choice + .template-pattern-panel__choice {
+  border-top: thin solid var(--border);
+}
+
+.template-pattern-panel__choice:hover,
+.template-pattern-panel__choice:focus-visible {
+  background: var(--surface-muted);
+}
+
+.template-pattern-panel__choice-label {
+  font-weight: bold;
+}
+
+.template-pattern-panel__choice-signal {
+  color: var(--text-muted);
+  line-height: 1.35;
 }
 
 .template-library__anchors {
@@ -115,7 +154,8 @@
 .template-library__pattern[hidden],
 .template-library__children[hidden],
 .template-library__variant[hidden],
-.template-panel[hidden] {
+.template-panel[hidden],
+.template-pattern-panel[hidden] {
   display: none;
 }
 
