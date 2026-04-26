@@ -1,0 +1,31 @@
+{%- assign pattern = include.pattern -%}
+
+<section
+  class="template-pattern-panel"
+  data-template-pattern-panel
+  data-guide-pattern="{{ pattern.id }}"
+  hidden
+>
+  <header class="template-pattern-panel__header">
+    <p class="section-eyebrow">Choose a template</p>
+    <h2>{{ pattern.label }}</h2>
+  </header>
+
+  <div class="template-pattern-panel__choices" aria-label="{{ pattern.label }} choices">
+    {%- for variant in pattern.variants -%}
+      {%- if variant.has_template -%}
+        <a
+          class="template-pattern-panel__choice"
+          href="#{{ variant.target }}"
+          data-guide-choice-target="{{ variant.target }}"
+          data-guide-pattern="{{ pattern.id }}"
+        >
+          <span class="template-pattern-panel__choice-label">{{ variant.label }}</span>
+          {%- if variant.signal != '' -%}
+            <span class="template-pattern-panel__choice-signal">{{ variant.signal }}</span>
+          {%- endif -%}
+        </a>
+      {%- endif -%}
+    {%- endfor -%}
+  </div>
+</section>

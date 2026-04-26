@@ -12,6 +12,7 @@ const initializeTemplateLibrary = (root) => {
   const patternControls = Array.from(root.querySelectorAll("[data-guide-pattern-control]"))
   const variantControls = Array.from(root.querySelectorAll("[data-guide-variant-control]"))
   const templatePanels = Array.from(root.querySelectorAll("[data-template-panel]"))
+  const patternPanels = Array.from(root.querySelectorAll("[data-template-pattern-panel]"))
   const searchInput = root.querySelector("[data-template-search]")
   const redirects = collectRedirects(root)
   const targetMap = new Map([
@@ -61,19 +62,28 @@ const initializeTemplateLibrary = (root) => {
     })
   }
 
-  const setTemplate = ({ target, patternId, showPattern }) => {
-    const activePanels = []
+  const setPatternPanel = (patternId, showPattern) => {
+    patternPanels.forEach((panel) => {
+      const isActive = showPattern && panel.dataset.guidePattern === patternId
+      panel.hidden = !isActive
+      panel.classList.toggle("is-active", isActive)
+    })
+  }
 
+  const setTemplate = (target) => {
+    let activePanel = null
     templatePanels.forEach((panel) => {
-      const isActive = showPattern ? panel.dataset.guidePattern === patternId : panel.dataset.guideTarget === target
+      const isActive = panel.dataset.guideTarget === target
       panel.hidden = !isActive
       panel.classList.toggle("is-active", isActive)
       if (isActive) {
-        activePanels.push(panel)
+        activePanel = panel
       }
     })
 
-    activePanels.forEach((panel) => renderLanguage(panel, activeLanguage))
+    if (activePanel) {
+      renderLanguage(activePanel, activeLanguage)
+    }
   }
 
   const renderTarget = (rawTarget, { updateHash = true } = {}) => {
@@ -96,7 +106,8 @@ const initializeTemplateLibrary = (root) => {
 
     setPattern(patternId)
     setVariant(showPattern ? "" : renderableTarget)
-    setTemplate({ target: renderableTarget, patternId, showPattern })
+    setPatternPanel(patternId, showPattern)
+    setTemplate(showPattern ? "" : renderableTarget)
     renderSearch()
 
     const activeControl = showPattern
@@ -144,6 +155,13 @@ const initializeTemplateLibrary = (root) => {
   })
 
   root.addEventListener("click", (event) => {
+    const choice = event.target.closest("[data-guide-choice-target]")
+    if (choice) {
+      event.preventDefault()
+      renderTarget(choice.dataset.guideChoiceTarget || "")
+      return
+    }
+
     const control = event.target.closest("[data-code-collection-language-control]")
     if (!control) {
       return

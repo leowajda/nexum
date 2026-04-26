@@ -75,7 +75,12 @@ module SiteKit
     end
 
     def variant_search_text(pattern, variant)
-      [pattern.fetch('label'), variant.fetch('label'), *variant.fetch('aliases', [])].join(' ').downcase
+      [
+        pattern.fetch('label'),
+        variant.fetch('label'),
+        variant.fetch('signal', ''),
+        *variant.fetch('aliases', [])
+      ].join(' ').downcase
     end
   end
 end
