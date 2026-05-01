@@ -211,12 +211,19 @@ export const initializeSearchOverlay = () => {
     const currentSequence = sequence.current()
     visibleCount += SEARCH_PAGE_SIZE
     summary.textContent = "Loading."
-    const records = await resultSet.loadThrough(visibleCount)
-    if (!sequence.matches(currentSequence)) {
-      return
-    }
+    try {
+      const records = await resultSet.loadThrough(visibleCount)
+      if (!sequence.matches(currentSequence)) {
+        return
+      }
 
-    renderSearchResults({ records, total: resultSet.total, visibleCount, results, summary, moreButton })
+      renderSearchResults({ records, total: resultSet.total, visibleCount, results, summary, moreButton })
+    } catch (error) {
+      if (sequence.matches(currentSequence)) {
+        summary.textContent = "Search index is unavailable."
+      }
+      console.error(error)
+    }
   })
 
   dialog.addEventListener("keydown", (event) => {

@@ -48,6 +48,7 @@
               class="flowchart-node flowchart-node--{{ node.kind }}"
               data-flowchart-node
               data-flowchart-node-id="{{ node.id | escape }}"
+              data-flowchart-node-aliases="{{ node.aliases | default: empty | join: ' ' | escape }}"
               data-flowchart-node-kind="{{ node.kind }}"
               data-flowchart-node-title="{{ node.title | escape }}"
               data-flowchart-node-label="{{ node.label | escape }}"

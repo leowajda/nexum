@@ -2,6 +2,9 @@ import { onReady } from "./dom.js"
 import { loadPagefindRecords, pagefindFilter } from "./pagefind-client.js"
 import { createSequenceGuard, meaningfulSearchQuery, normalizeSearchQuery, normalizedPath } from "./search-query.js"
 
+const PROBLEM_SEARCH_DEBOUNCE_MS = 160
+const problemSearchCache = new Map()
+
 const queryCheckedRadio = (form, name) =>
   form.querySelector(`input[name="${name}"]:checked`)?.value ?? ""
 
@@ -56,8 +59,20 @@ const searchFilters = () => ({
 })
 
 const searchResultUrls = async (query, filters) => {
-  const records = await loadPagefindRecords(query, { filters: pagefindFilter(filters) })
-  return new Set(records.map((record) => normalizedPath(record.url)))
+  const cacheKey = JSON.stringify([query, filters])
+  if (!problemSearchCache.has(cacheKey)) {
+    problemSearchCache.set(
+      cacheKey,
+      loadPagefindRecords(query, { filters: pagefindFilter(filters) })
+        .then((records) => new Set(records.map((record) => normalizedPath(record.url))))
+        .catch((error) => {
+          problemSearchCache.delete(cacheKey)
+          throw error
+        })
+    )
+  }
+
+  return problemSearchCache.get(cacheKey)
 }
 
 const initializeProblemFilters = () => {
@@ -74,6 +89,8 @@ const initializeProblemFilters = () => {
   const languageCells = Array.from(table.querySelectorAll("[data-language-column]"))
   const rows = Array.from(table.querySelectorAll("[data-problem-row]")).map(readProblemRow)
   const sequence = createSequenceGuard()
+  const defaultEmptyMessage = emptyState?.textContent || "No problems match the current search."
+  let renderDebounce
 
   const readSelectedLanguages = () => {
     if (languageInputs.length === 0) {
@@ -185,8 +202,20 @@ const initializeProblemFilters = () => {
     })
 
     if (emptyState) {
+      emptyState.textContent = defaultEmptyMessage
       emptyState.hidden = visibleCount > 0
     }
+  }
+
+  const renderSearchUnavailable = () => {
+    if (emptyState) {
+      emptyState.textContent = "Problem search is unavailable."
+      emptyState.hidden = false
+    }
+
+    rows.forEach((row) => {
+      row.element.hidden = true
+    })
   }
 
   const rowMatchesLocalFilters = (row, state) => {
@@ -227,15 +256,28 @@ const initializeProblemFilters = () => {
       return
     }
 
-    const visibleUrls = intersectUrls(
-      localUrls,
-      await searchResultUrls(state.query, searchFilters())
-    )
+    let searchUrls
+    try {
+      searchUrls = await searchResultUrls(state.query, searchFilters())
+    } catch (error) {
+      if (sequence.matches(currentSequence)) {
+        renderSearchUnavailable()
+      }
+      console.error(error)
+      return
+    }
+
     if (!sequence.matches(currentSequence)) {
       return
     }
 
+    const visibleUrls = intersectUrls(localUrls, searchUrls)
     renderRows(visibleUrls)
+  }
+
+  const scheduleRender = () => {
+    window.clearTimeout(renderDebounce)
+    renderDebounce = window.setTimeout(render, PROBLEM_SEARCH_DEBOUNCE_MS)
   }
 
   if (activeFilterList) {
@@ -273,13 +315,23 @@ const initializeProblemFilters = () => {
     })
   }
 
-  form.addEventListener("input", () => {
+  form.addEventListener("input", (event) => {
+    if (event.target === searchInput) {
+      scheduleRender()
+      return
+    }
+
     render()
   })
-  form.addEventListener("change", () => {
+  form.addEventListener("change", (event) => {
+    if (event.target === searchInput) {
+      return
+    }
+
     render()
   })
   form.addEventListener("reset", () => {
+    window.clearTimeout(renderDebounce)
     window.setTimeout(render, 0)
   })
 

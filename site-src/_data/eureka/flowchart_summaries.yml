@@ -139,7 +139,7 @@ connectivity-dsu:
         - "Explicit traversal paths are unnecessary."
     - title: "Why It Helps"
       text: "Near-constant **`union`** and `find` operations for component membership, without full traversals."
-graph-smallcontraints:
+graph-small-constraints:
   sections:
     - title: "What This Means"
       text: "Small graph constraints can make **exhaustive search** a reasonable first option."
@@ -150,7 +150,7 @@ graph-smallcontraints:
         - "No clear optimization pattern stands out yet."
     - title: "How To Decide"
       text: "DFS or backtracking can plausibly cover the full search space in time."
-graph-smallcontraints-dfs:
+graph-small-constraints-dfs:
   sections:
     - title: "What It Is"
       text: "Graph DFS explores one reachable path or component before returning to the next edge."
@@ -161,7 +161,7 @@ graph-smallcontraints-dfs:
         - "Path-specific state must be carried and undone on return."
     - title: "Why It Helps"
       text: "Simple recursive or stack-based traversal for small graph state spaces."
-graph-smallcontraints-bfs:
+graph-small-constraints-bfs:
   sections:
     - title: "What It Is"
       text: "Small unweighted state-space BFS splits by whether states are graph nodes or grid cells."
@@ -172,7 +172,7 @@ graph-smallcontraints-bfs:
         - "State transitions are easier to reason about level by level than recursively."
     - title: "Why It Helps"
       text: "Choose graph BFS for arbitrary states and grid BFS for coordinate states."
-graph-smallcontraints-graph-bfs:
+graph-small-constraints-graph-bfs:
   sections:
     - title: "What It Is"
       text: "Graph BFS explores a small unweighted graph or generated state space by distance layer."
@@ -182,7 +182,7 @@ graph-smallcontraints-graph-bfs:
         - "Each transition has the same cost."
     - title: "Why It Helps"
       text: "Keeps exploration complete while preserving shortest-step order."
-graph-smallcontraints-grid-bfs:
+graph-small-constraints-grid-bfs:
   sections:
     - title: "What It Is"
       text: "Grid BFS explores matrix coordinates by neighbor layers."
@@ -265,7 +265,7 @@ linked-list:
         - "Pointer movement or **rewiring** is part of the solution."
     - title: "How To Decide"
       text: "List topology and pointer manipulation drive the problem."
-linked-list-twopointers:
+linked-list-two-pointers:
   sections:
     - title: "What It Is"
       text: "Two-pointer linked-list techniques move pointers at different speeds or offsets through the same list."
@@ -298,7 +298,7 @@ small-constraints-efficiency:
         - "If full enumeration looks too large, repeated subproblems usually appear."
     - title: "How To Decide"
       text: "Use brute force if the full search space fits comfortably; otherwise move toward dynamic programming."
-small-constraints-bruteforce/backtracking:
+small-constraints-backtracking:
   sections:
     - title: "What It Is"
       text: "Backtracking builds candidate answers step by step and abandons branches that can no longer work."
@@ -342,7 +342,7 @@ subarrays:
         - "Left and right boundaries are the natural state."
     - title: "How To Decide"
       text: "Contiguity is essential to the problem definition."
-subarrays-prefixsums:
+subarrays-prefix-sum:
   sections:
     - title: "What It Is"
       text: "A prefix-sum array stores **cumulative totals** so any range sum can be derived from two prefix values."
@@ -353,7 +353,7 @@ subarrays-prefixsums:
         - "Constant-time range queries after preprocessing are useful."
     - title: "Why It Helps"
       text: "Fast range-sum lookups that simplify counting and target-sum work."
-subarrays-twopointers:
+subarrays-two-pointers:
   sections:
     - title: "What It Is"
       text: "**Sliding window** maintains a contiguous range and splits by fixed length or flexible goal."
@@ -404,7 +404,7 @@ subarrays-window-longest:
         - "A running invariant tells whether the current range is valid."
     - title: "Why It Helps"
       text: "Keeps one maximal candidate per right boundary."
-max/min:
+maximum-minimum:
   sections:
     - title: "What This Means"
       text: "The goal is to optimize one value under the rules of the problem."
@@ -415,7 +415,7 @@ max/min:
         - "The challenge is choosing actions that improve that score."
     - title: "How To Decide"
       text: "One best achievable value defines the result."
-max/min-monotonic:
+maximum-minimum-monotonic:
   sections:
     - title: "What This Means"
       text: "A monotonic feasibility rule is the clearest sign that binary search may fit."
@@ -426,7 +426,7 @@ max/min-monotonic:
         - "Sorting or reframing makes the search space ordered."
     - title: "How To Decide"
       text: "A one-way true-or-false boundary exists over candidate answers."
-max/min-binarysearch:
+maximum-minimum-binary-search:
   sections:
     - title: "What It Is"
       text: "**Binary search** on the answer tests candidate values over an ordered search space."
@@ -437,7 +437,7 @@ max/min-binarysearch:
         - "The smallest valid or largest invalid value."
     - title: "Why It Helps"
       text: "Searches the answer space in logarithmic steps instead of scanning every candidate."
-max/min-subproblem:
+maximum-minimum-subproblem:
   sections:
     - title: "What This Means"
       text: "Dynamic programming fits when the best answer can be built from smaller answers of the same kind."
@@ -448,7 +448,7 @@ max/min-subproblem:
         - "Memoization would remove repeated work."
     - title: "How To Decide"
       text: "The optimization breaks into overlapping smaller optimizations."
-max/min-dp:
+maximum-minimum-dp:
   sections:
     - title: "What It Is"
       text: "Dynamic programming stores the best value for smaller states and reuses them to build the final optimum."
@@ -459,7 +459,7 @@ max/min-dp:
         - "A clean recurrence and base cases can be defined."
     - title: "Why It Helps"
       text: "Turns repeated optimization work into reusable **state transitions**."
-max/min-greedyhuh:
+maximum-minimum-greedy-check:
   sections:
     - title: "What This Means"
       text: "Greedy fits only when a locally best move can be shown to stay globally safe."
@@ -470,7 +470,7 @@ max/min-greedyhuh:
         - "You can justify that delaying the local best move never helps."
     - title: "How To Decide"
       text: "Choose greed only if the local choice stays optimal."
-max/min-greedy:
+maximum-minimum-greedy:
   sections:
     - title: "What It Is"
       text: "A greedy algorithm commits to the best local move according to a rule chosen for the problem."
@@ -503,7 +503,7 @@ counting-efficiency:
         - "If not, the same subcounts usually recur."
     - title: "How To Decide"
       text: "Use brute force only if full enumeration is acceptable; otherwise move toward dynamic programming."
-counting-bruteforce/backtracking:
+counting-backtracking:
   sections:
     - title: "What It Is"
       text: "Backtracking enumerates every valid construction and increments the count for each one that works."
@@ -547,7 +547,7 @@ sequence-count-monotonic:
         - "Sorted order or input order supports a **single pass**."
     - title: "How To Decide"
       text: "Pointer movement can follow a monotonic condition."
-sequence-count-twopointers:
+sequence-count-two-pointers:
   sections:
     - title: "What It Is"
       text: "Two pointers traverse two ordered sequences together and coordinate decisions between them."
@@ -602,7 +602,7 @@ find-indices-monotonic:
         - "One comparison can eliminate a whole range of pairs."
     - title: "How To Decide"
       text: "An ordered sweep can replace nested pair enumeration."
-find-indices-twopointers:
+find-indices-two-pointers:
   sections:
     - title: "What It Is"
       text: "Two pointers search candidate pairs in order instead of checking every pair explicitly."
@@ -635,7 +635,7 @@ constant-memory-monotonic:
         - "The full state fits in a **few variables**."
     - title: "How To Decide"
       text: "Constant-space processing and one-directional pointer movement can coexist."
-constant-memory-twopointers:
+constant-memory-two-pointers:
   sections:
     - title: "What It Is"
       text: "Two pointers track just a few positions while scanning or rearranging data in place."

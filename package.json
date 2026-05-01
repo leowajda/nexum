@@ -16,8 +16,10 @@
     "build:indexed-site": "pnpm build:site && pnpm build:search-records && pnpm build:pagefind && pnpm check:pagefind",
     "serve": "pnpm preview",
     "lint:ruby": "bundle exec rubocop",
+    "lint:js": "eslint site-src/assets/js script tests/functional eslint.config.mjs",
     "check:seo": "ruby script/check_seo.rb",
-    "check:js": "find site-src/assets/js script tests/functional \\( -name '*.js' -o -name '*.mjs' \\) -print0 | sort -z | xargs -0 -n1 node --check",
+    "check:js:syntax": "find site-src/assets/js script tests/functional \\( -name '*.js' -o -name '*.mjs' \\) -print0 | sort -z | xargs -0 -n1 node --check",
+    "check:js": "pnpm check:js:syntax && pnpm lint:js",
     "test:ruby": "bundle exec ruby -Itest test/run.rb",
     "check:links": "ruby script/check_internal_links.rb",
     "test:site": "ruby script/validate_catalogs.rb && pnpm build:indexed-site && pnpm check:seo",
@@ -27,7 +29,10 @@
     "test:full": "pnpm check:validate && pnpm lint:ruby && pnpm check:js && pnpm validate:catalogs && pnpm test:ruby && pnpm build:indexed-site && pnpm check:seo && pnpm check:links && pnpm test:functional:built"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.59.1",
+    "eslint": "^10.2.1",
+    "globals": "^17.5.0",
     "pagefind": "1.5.2"
   }
 }

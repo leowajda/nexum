@@ -4,27 +4,15 @@ module SiteKit
   class FlowchartLayoutBuilder
     NODE_GEOMETRY_KEYS = %w[x y width height].freeze
     EDGE_GEOMETRY_KEYS = %w[path label_x label_y].freeze
-    DEFAULT_COLUMNS = {
-      'main' => 100,
-      'decision' => 500,
-      'secondary' => 900,
-      'secondary-branch' => 1250,
-      'tertiary' => 1300,
-      'quaternary' => 1550
-    }.freeze
-    ROW_UNIT = 100
-    DECISION_SIZE = 200
-    SOLUTION_HEIGHT = 74.7969
-    SOLUTION_MIN_WIDTH = 96
-    SOLUTION_LABEL_PADDING = 68
-    SOLUTION_CHARACTER_WIDTH = 9
-    CHART_BOTTOM_PADDING = 250
+    LEGACY_ID_PATTERN = %r{/|contraints|huh|twopointers|prefixsums|binarysearch}
 
     def initialize(flowchart_data:)
       @flowchart_data = flowchart_data
     end
 
     def build
+      validate_source!
+
       nodes = source_nodes.map { |node| build_node(node) }
       node_index = nodes.to_h { |node| [node.fetch('id'), node] }
 
@@ -39,8 +27,14 @@ module SiteKit
 
     attr_reader :flowchart_data
 
+    def validate_source!
+      validate_clean_node_ids!
+      validate_unique_node_references!
+      validate_unique_edge_ids!
+    end
+
     def build_chart(nodes)
-      chart = source_chart.except('height')
+      chart = source_chart.except('height', 'layout')
       chart.merge('height' => chart_height(nodes))
     end
 
@@ -80,33 +74,61 @@ module SiteKit
       raise "Flowchart edge '#{edge.fetch('id', '(unknown)')}' defines generated geometry: #{generated_keys.join(', ')}"
     end
 
+    def validate_clean_node_ids!
+      legacy_ids = source_nodes.filter_map do |node|
+        node_id = node.fetch('id')
+        node_id if node_id.match?(LEGACY_ID_PATTERN)
+      end
+      return if legacy_ids.empty?
+
+      raise "Flowchart node ids must be clean; use aliases for legacy ids: #{legacy_ids.join(', ')}"
+    end
+
+    def validate_unique_node_references!
+      references = source_nodes.flat_map do |node|
+        [node.fetch('id'), *Array(node.fetch('aliases', []))]
+      end
+      duplicates = references.tally.select { |_reference, count| count > 1 }.keys
+      return if duplicates.empty?
+
+      raise "Flowchart node ids and aliases must be unique: #{duplicates.join(', ')}"
+    end
+
+    def validate_unique_edge_ids!
+      edge_ids = source_edges.map { |edge| edge.fetch('id') }
+      duplicates = edge_ids.tally.select { |_edge_id, count| count > 1 }.keys
+      return if duplicates.empty?
+
+      raise "Flowchart edge ids must be unique: #{duplicates.join(', ')}"
+    end
+
     def column_x(layout)
-      columns.fetch(layout.fetch('column'))
+      layout_config.columns.fetch(layout.fetch('column'))
     end
 
     def row_y(layout)
-      normalize_number(layout.fetch('row') * ROW_UNIT)
+      normalize_number(layout.fetch('row') * layout_config.row_unit)
     end
 
     def node_width(node)
-      return DECISION_SIZE if node.fetch('kind') == 'decision'
+      return layout_config.decision_size if node.fetch('kind') == 'decision'
 
       [
-        SOLUTION_MIN_WIDTH,
-        (node.fetch('label').length * SOLUTION_CHARACTER_WIDTH) + SOLUTION_LABEL_PADDING
+        layout_config.solution_min_width,
+        (node.fetch('label').length * layout_config.solution_character_width) + layout_config.solution_label_padding
       ].max
     end
 
     def node_height(node)
-      node.fetch('kind') == 'decision' ? DECISION_SIZE : SOLUTION_HEIGHT
+      node.fetch('kind') == 'decision' ? layout_config.decision_size : layout_config.solution_height
     end
 
     def chart_height(nodes)
-      normalize_number(nodes.map { |node| node.fetch('y') + node.fetch('height') }.max + CHART_BOTTOM_PADDING)
+      normalize_number(nodes.map { |node| node.fetch('y') + node.fetch('height') }.max + layout_config.bottom_padding)
     end
 
-    def columns
-      @columns ||= DEFAULT_COLUMNS.merge(source_chart.fetch('columns', {}))
+    def layout_config
+      @layout_config ||= FlowchartLayoutConfig.new(chart: source_chart)
     end
 
     def source_chart

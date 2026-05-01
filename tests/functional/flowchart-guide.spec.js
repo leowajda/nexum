@@ -33,3 +33,13 @@ test("solution nodes appear in the decision path", async ({ page }) => {
   await expect(path.getByRole("button", { name: "Is the graph Weighted?" })).toBeVisible()
   await expect(path.getByRole("button", { name: "Dijkstra's Algorithm" })).toBeVisible()
 })
+
+test("legacy flowchart hashes resolve through node aliases", async ({ page }) => {
+  await page.goto("/writing/algorithmic-flowchart/#max/min-dp")
+
+  await expect(page.locator('[data-flowchart-node-id="maximum-minimum-dp"]')).toHaveAttribute(
+    "aria-pressed",
+    "true"
+  )
+  await expect(page.getByRole("heading", { name: "Dynamic Programming", level: 2 })).toBeVisible()
+})
