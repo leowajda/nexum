@@ -62,6 +62,16 @@ class SiteKitSearchIndexBuilderTest < SiteKitTestCase
     )
   end
 
+  def test_duplicate_source_titles_include_module_context
+    records = search_records.select do |record|
+      record.meta.fetch('kind') == 'Source' && record.meta.fetch('title') == 'FsCommands.java'
+    end
+
+    assert_operator records.size, :>, 1
+    assert(records.all? { |record| record.meta.fetch('section', '').include?('Spring Boot') })
+    assert_equal records.size, records.map { |record| record.meta.fetch('section') }.uniq.size
+  end
+
   def test_search_record_urls_point_to_rendered_pages
     routes = rendered_routes
 

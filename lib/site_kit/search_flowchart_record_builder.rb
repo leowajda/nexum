@@ -40,12 +40,12 @@ module SiteKit
     def node_content(node, title, summary)
       [
         node.fetch('id'),
+        node.fetch('aliases', []),
         node.fetch('kind'),
         node.fetch('label'),
         title,
         ancestor_labels(node),
         summary_text(summary),
-        node.fetch('details_html', ''),
         node.fetch('references', []).map { |reference| reference.fetch('title', '') }
       ]
     end

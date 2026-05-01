@@ -19,10 +19,12 @@ module SiteKit
     end
 
     def clean_text(value)
+      Array(value).flatten.join(' ').gsub(/\s+/, ' ').strip
+    end
+
+    def clean_html(value)
       Array(value).flatten.map do |entry|
-        text = entry.to_s
-        text = Nokogiri::HTML.fragment(text).text if text.include?('<') && text.include?('>')
-        text
+        Nokogiri::HTML.fragment(entry.to_s).text
       end.join(' ').gsub(/\s+/, ' ').strip
     end
 

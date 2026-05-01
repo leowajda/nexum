@@ -15,7 +15,7 @@
 - Build the Pagefind index from `_site`: `pnpm build:pagefind`
 - Verify the Pagefind runtime assets and record count: `pnpm check:pagefind`
 - Verify rendered SEO metadata and sitemap/noindex alignment: `pnpm check:seo`
-- Check JavaScript syntax: `pnpm check:js`
+- Check JavaScript syntax and lint rules: `pnpm check:js`
 - Run Ruby tests: `pnpm test:ruby`
 - Run rendered-page functional tests: `pnpm test:functional`
 - Run the full Make validation target: `make test`

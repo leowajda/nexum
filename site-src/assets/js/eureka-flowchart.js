@@ -34,6 +34,15 @@ const initializeFlowchart = (root) => {
   const mobileScale = parseNumber(root.dataset.flowchartScaleMobile, desktopScale)
   const supportsHover = typeof window.matchMedia === "function" && window.matchMedia("(hover: hover)").matches
   const nodeMeta = buildNodeMetaMap(nodeButtons)
+  const nodeAliasMap = new Map(
+    nodeButtons.flatMap((button) => {
+      const nodeId = button.dataset.flowchartNodeId || ""
+      return (button.dataset.flowchartNodeAliases || "")
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((alias) => [alias, nodeId])
+    })
+  )
   const state = createFlowchartState(desktopScale)
   const viewportController = createFlowchartViewport({
     root,
@@ -50,6 +59,9 @@ const initializeFlowchart = (root) => {
     inspector.hidden = true
     root.classList.add("flowchart-workspace--empty")
   }
+
+  const resolveNodeId = (nodeId) =>
+    queryNodeButton(root, nodeId) ? nodeId : nodeAliasMap.get(nodeId) || nodeId
 
   const renderInspector = (nodeId) => {
     const template = queryTemplate(root, nodeId)
@@ -116,6 +128,7 @@ const initializeFlowchart = (root) => {
   }
 
   const commitSelection = (nodeId, { scroll = true, updateHash = true } = {}) => {
+    nodeId = resolveNodeId(nodeId)
     const nextButton = queryNodeButton(root, nodeId)
     if (!nextButton) {
       return
@@ -147,6 +160,7 @@ const initializeFlowchart = (root) => {
   }
 
   const previewNode = (nodeId) => {
+    nodeId = resolveNodeId(nodeId)
     if (!supportsHover || state.isDragging || nodeId === state.selectedId) {
       return
     }
@@ -247,7 +261,7 @@ const initializeFlowchart = (root) => {
   })
 
   window.addEventListener("hashchange", () => {
-    const hashNodeId = getHashValue()
+    const hashNodeId = resolveNodeId(getHashValue())
     if (hashNodeId && queryNodeButton(root, hashNodeId)) {
       commitSelection(hashNodeId, { scroll: true, updateHash: false })
       return
@@ -266,7 +280,7 @@ const initializeFlowchart = (root) => {
 
   viewportController.syncScale()
 
-  const hashNodeId = getHashValue()
+  const hashNodeId = resolveNodeId(getHashValue())
   if (hashNodeId && queryNodeButton(root, hashNodeId)) {
     commitSelection(hashNodeId, { scroll: false, updateHash: false })
     window.requestAnimationFrame(() => {

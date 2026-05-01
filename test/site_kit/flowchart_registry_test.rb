@@ -14,10 +14,19 @@ class SiteKitFlowchartRegistryTest < SiteKitTestCase
     assert(source.fetch('nodes').all? { |node| node.fetch('layout').key?('column') && node.fetch('layout').key?('row') })
   end
 
+  def test_flowchart_source_keeps_content_structured
+    source = build_site.data.fetch('eureka').fetch('flowchart')
+
+    assert_empty(source.fetch('nodes').select { |node| node.key?('details_html') })
+    assert_empty(source.fetch('nodes').map { |node| node.fetch('id') }.grep(%r{/|contraints|huh|twopointers}))
+    assert_includes source.fetch('nodes').find { |node| node.fetch('id') == 'maximum-minimum-dp' }.fetch('aliases'),
+                    'max/min-dp'
+  end
+
   def test_layout_builder_generates_renderable_geometry
     flowchart = build_context.flowchart_data
-    node = flowchart.fetch('nodes').find { |entry| entry.fetch('id') == 'graph-smallcontraints-bfs' }
-    edge = flowchart.fetch('edges').find { |entry| entry.fetch('id') == 'graph-smallcontraints-bfs-no' }
+    node = flowchart.fetch('nodes').find { |entry| entry.fetch('id') == 'graph-small-constraints-bfs' }
+    edge = flowchart.fetch('edges').find { |entry| entry.fetch('id') == 'graph-small-constraints-bfs-no' }
 
     assert_equal 900, node.fetch('x')
     assert_equal 2000, node.fetch('y')
@@ -65,6 +74,42 @@ class SiteKitFlowchartRegistryTest < SiteKitTestCase
     assert_match(/defines generated geometry: path/, error.message)
   end
 
+  def test_layout_builder_rejects_legacy_node_ids
+    source = {
+      'chart' => { 'width' => 100 },
+      'nodes' => [
+        { 'id' => 'max/min-dp', 'kind' => 'solution', 'label' => 'DP', 'title' => 'DP',
+          'layout' => { 'column' => 'main', 'row' => 0 } }
+      ],
+      'edges' => []
+    }
+
+    error = assert_raises(RuntimeError) do
+      SiteKit::FlowchartLayoutBuilder.new(flowchart_data: source).build
+    end
+
+    assert_match(%r{use aliases for legacy ids: max/min-dp}, error.message)
+  end
+
+  def test_layout_builder_rejects_duplicate_node_aliases
+    source = {
+      'chart' => { 'width' => 100 },
+      'nodes' => [
+        { 'id' => 'a', 'aliases' => ['legacy'], 'kind' => 'decision', 'label' => 'A', 'title' => 'A',
+          'layout' => { 'column' => 'main', 'row' => 0 } },
+        { 'id' => 'b', 'aliases' => ['legacy'], 'kind' => 'solution', 'label' => 'B', 'title' => 'B',
+          'layout' => { 'column' => 'decision', 'row' => 1 } }
+      ],
+      'edges' => []
+    }
+
+    error = assert_raises(RuntimeError) do
+      SiteKit::FlowchartLayoutBuilder.new(flowchart_data: source).build
+    end
+
+    assert_match(/ids and aliases must be unique: legacy/, error.message)
+  end
+
   def test_builds_incoming_edges_by_target
     registry = build_context.eureka_context.flowcharts.fetch('eureka')
     edge = registry.fetch('incoming_edges_by_target').fetch('directed-graph-topo')
@@ -102,9 +147,9 @@ class SiteKitFlowchartRegistryTest < SiteKitTestCase
       [node.fetch('id'), node]
     end
     graph_branch_bottom = %w[
-      graph-smallcontraints-bfs
-      graph-smallcontraints-graph-bfs
-      graph-smallcontraints-grid-bfs
+      graph-small-constraints-bfs
+      graph-small-constraints-graph-bfs
+      graph-small-constraints-grid-bfs
     ].map { |id| node_bottom(nodes.fetch(id)) }.max
 
     assert_operator nodes.fetch('kth-smallest').fetch('y') - graph_branch_bottom, :>=, 500

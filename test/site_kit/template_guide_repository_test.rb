@@ -100,7 +100,7 @@ class SiteKitTemplateGuideRepositoryTest < SiteKitTestCase
                     .find { |pattern| pattern.fetch('id') == 'graph' }
                     .fetch('variants')
                     .find { |variant| variant.fetch('id') == 'bfs' }
-    graph_bfs['flowchart_nodes'] = ['graph-smallcontraints-graph-bfs']
+    graph_bfs['flowchart_nodes'] = ['graph-small-constraints-graph-bfs']
 
     error = assert_raises(RuntimeError) do
       SiteKit::TemplateGuideRepository.new(

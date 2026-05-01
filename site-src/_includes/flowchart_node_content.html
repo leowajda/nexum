@@ -27,12 +27,6 @@
         {%- endfor -%}
       </div>
     </section>
-  {%- elsif node.details_html and node.details_html != "" -%}
-    <section class="flowchart-inspector__panel" data-flowchart-note>
-      <div class="flowchart-prose">
-        {{ node.details_html }}
-      </div>
-    </section>
   {%- endif -%}
 
   {%- if node.references and node.references.size > 0 -%}

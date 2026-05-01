@@ -12,7 +12,7 @@
   template: prefix-sum
   description: Convert range totals into differences between cumulative checkpoints.
   aliases: [Prefix Sum]
-  flowchart_nodes: [subarrays-prefixsums]
+  flowchart_nodes: [subarrays-prefix-sum]
 
 - id: sliding-window-fixed
   label: Sliding Window Fixed Size
@@ -48,7 +48,7 @@
   template: two-pointers-opposite
   description: Start at both ends and discard the side that cannot improve the result.
   aliases: [Two Pointers]
-  flowchart_nodes: [find-indices-twopointers, constant-memory-twopointers]
+  flowchart_nodes: [find-indices-two-pointers, constant-memory-two-pointers]
 
 - id: two-pointers-same
   label: Two Pointers Same Direction
@@ -57,7 +57,7 @@
   template: two-pointers-same
   description: Move forward pointers over one sequence while preserving a range invariant.
   aliases: [Two Pointers]
-  flowchart_nodes: [sequence-count-twopointers]
+  flowchart_nodes: [sequence-count-two-pointers]
 
 - id: binary-search
   label: Binary Search
@@ -66,7 +66,7 @@
   template: binary-search
   description: Halve a sorted or monotonic search space until the boundary is found.
   aliases: [Binary Search]
-  flowchart_nodes: [max/min-binarysearch]
+  flowchart_nodes: [maximum-minimum-binary-search]
 
 - id: binary-search-rotated
   label: Binary Search Rotated Or Peak
@@ -91,7 +91,7 @@
   template: backtracking
   description: Explore candidate states one branch at a time and undo each choice.
   aliases: [Backtracking]
-  flowchart_nodes: [small-constraints-bruteforce/backtracking]
+  flowchart_nodes: [small-constraints-backtracking]
 
 - id: backtracking-aggregation
   label: Backtracking With Aggregation
@@ -102,7 +102,7 @@
   aliases: []
   problem_rules:
     - all: [Backtracking, Memoization]
-  flowchart_nodes: [counting-bruteforce/backtracking]
+  flowchart_nodes: [counting-backtracking]
 
 - id: tree-bfs
   label: BFS On Tree
@@ -159,7 +159,7 @@
       none: [Tree, Binary Tree, Matrix]
     - all: [Breadth-First Search, Dynamic Programming]
       none: [Tree, Binary Tree, Matrix]
-  flowchart_nodes: [shortest-path-graph-bfs, graph-smallcontraints-graph-bfs]
+  flowchart_nodes: [shortest-path-graph-bfs, graph-small-constraints-graph-bfs]
 
 - id: graph-dfs
   label: DFS On Graphs
@@ -170,7 +170,7 @@
   aliases: [Depth-First Search, Graph Theory]
   problem_rules:
     - all: [Depth-First Search, Graph Theory]
-  flowchart_nodes: [graph-smallcontraints-dfs]
+  flowchart_nodes: [graph-small-constraints-dfs]
 
 - id: matrix-bfs
   label: BFS On A Matrix
@@ -181,7 +181,7 @@
   aliases: [Matrix, Breadth-First Search]
   problem_rules:
     - all: [Breadth-First Search, Matrix]
-  flowchart_nodes: [shortest-path-grid-bfs, graph-smallcontraints-grid-bfs]
+  flowchart_nodes: [shortest-path-grid-bfs, graph-small-constraints-grid-bfs]
 
 - id: matrix-dfs
   label: DFS On A Matrix
@@ -236,7 +236,7 @@
   template: dynamic-programming
   description: Reuse overlapping subproblem results instead of recomputing states.
   aliases: [Dynamic Programming, Memoization]
-  flowchart_nodes: [small-constraints-dp, max/min-dp, counting-dp, sequence-count-dp]
+  flowchart_nodes: [small-constraints-dp, maximum-minimum-dp, counting-dp, sequence-count-dp]
 
 - id: dp-grid
   label: Dynamic Programming On Grid
@@ -293,7 +293,7 @@
   template: greedy
   description: Make the locally forced choice once an invariant proves it cannot hurt.
   aliases: [Greedy]
-  flowchart_nodes: [max/min-greedy]
+  flowchart_nodes: [maximum-minimum-greedy]
 
 - id: heap-top-k
   label: Heap And Top K
@@ -391,7 +391,7 @@
   template: linked-list
   description: Move through pointer-linked nodes while preserving references that can be lost.
   aliases: [Linked List]
-  flowchart_nodes: [linked-list-twopointers]
+  flowchart_nodes: [linked-list-two-pointers]
 
 - id: linked-list-rewire
   label: Linked List Reverse Or Rewire

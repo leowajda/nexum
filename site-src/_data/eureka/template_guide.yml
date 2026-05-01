@@ -13,7 +13,7 @@ patterns:
         aliases: [Binary Search]
         problem_rules:
           - any: [Binary Search]
-        flowchart_nodes: [max/min-binarysearch]
+        flowchart_nodes: [maximum-minimum-binary-search]
       - id: rotated-peak
         label: Rotated peak
         template: binary-search-rotated
@@ -35,7 +35,7 @@ patterns:
         problem_rules:
           - all: [Two Pointers]
             none: [Linked List]
-        flowchart_nodes: [find-indices-twopointers, constant-memory-twopointers]
+        flowchart_nodes: [find-indices-two-pointers, constant-memory-two-pointers]
       - id: two-pointers-forward
         label: Two pointers forward
         template: two-pointers-same
@@ -43,7 +43,7 @@ patterns:
         problem_rules:
           - all: [Two Pointers]
             none: [Linked List]
-        flowchart_nodes: [sequence-count-twopointers]
+        flowchart_nodes: [sequence-count-two-pointers]
       - id: sliding-window-fixed
         label: Sliding window fixed
         template: sliding-window-fixed
@@ -71,7 +71,7 @@ patterns:
         aliases: [Prefix Sum]
         problem_rules:
           - any: [Prefix Sum]
-        flowchart_nodes: [subarrays-prefixsums]
+        flowchart_nodes: [subarrays-prefix-sum]
       - id: difference-array
         label: Difference array
         template: difference-array
@@ -127,7 +127,7 @@ patterns:
         problem_rules:
           - all: [Depth-First Search, Graph Theory]
             none: [Tree, Binary Tree, Matrix]
-        flowchart_nodes: [graph-smallcontraints-dfs]
+        flowchart_nodes: [graph-small-constraints-dfs]
       - id: bfs
         label: BFS
         template: graph-bfs
@@ -137,7 +137,7 @@ patterns:
             none: [Tree, Binary Tree, Matrix]
           - all: [Breadth-First Search, Hash Table]
             none: [Tree, Binary Tree, Matrix]
-        flowchart_nodes: [shortest-path-graph-bfs, graph-smallcontraints-graph-bfs]
+        flowchart_nodes: [shortest-path-graph-bfs, graph-small-constraints-graph-bfs]
       - id: topological-sort
         label: Topological sort
         template: topological-sort
@@ -173,7 +173,7 @@ patterns:
         aliases: [Breadth-First Search]
         problem_rules:
           - all: [Breadth-First Search, Matrix]
-        flowchart_nodes: [shortest-path-grid-bfs, graph-smallcontraints-grid-bfs]
+        flowchart_nodes: [shortest-path-grid-bfs, graph-small-constraints-grid-bfs]
       - id: dfs
         label: DFS
         template: matrix-dfs
@@ -197,19 +197,19 @@ patterns:
         aliases: [Backtracking]
         problem_rules:
           - any: [Backtracking]
-        flowchart_nodes: [small-constraints-bruteforce/backtracking]
+        flowchart_nodes: [small-constraints-backtracking]
       - id: aggregate
         label: Aggregate
         template: backtracking-aggregation
         problem_rules:
           - all: [Backtracking, Memoization]
-        flowchart_nodes: [counting-bruteforce/backtracking]
+        flowchart_nodes: [counting-backtracking]
 
   - id: dynamic-programming
     label: Dynamic Programming
     order: 7
     description: Reuse overlapping subproblems.
-    flowchart_nodes: [small-constraints-dp, max/min-dp, counting-dp, sequence-count-dp]
+    flowchart_nodes: [small-constraints-dp, maximum-minimum-dp, counting-dp, sequence-count-dp]
     problem_rules:
       - any: [Dynamic Programming, Memoization]
     variants:
@@ -393,7 +393,7 @@ patterns:
         aliases: [Linked List, Two Pointers]
         problem_rules:
           - all: [Linked List, Two Pointers]
-        flowchart_nodes: [linked-list-twopointers]
+        flowchart_nodes: [linked-list-two-pointers]
       - id: rewire
         label: Reverse and rewire
         template: linked-list-rewire
@@ -434,7 +434,7 @@ patterns:
         aliases: [Greedy]
         problem_rules:
           - any: [Greedy]
-        flowchart_nodes: [max/min-greedy]
+        flowchart_nodes: [maximum-minimum-greedy]
       - id: sort-first
         label: Sort first
         template: greedy-sort

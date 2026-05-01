@@ -43,6 +43,7 @@ module SiteKit
           'language' => language.fetch('language_title'),
           'module' => source_module.fetch('title')
         },
+        meta: { 'section' => language.fetch('language_title') },
         priority: 65
       )
     end
@@ -70,8 +71,17 @@ module SiteKit
           'module' => source_module.fetch('title'),
           'source_format' => document.fetch('format')
         },
+        meta: { 'section' => document_section(language, source_module, document) },
         priority: 55
       )
+    end
+
+    def document_section(language, source_module, document)
+      parent_path = File.dirname(document.fetch('tree_path')).tr('/', ' / ')
+
+      [language.fetch('language_title'), source_module.fetch('title'), parent_path]
+        .reject { |part| part == '.' || part.empty? }
+        .join(' / ')
     end
   end
 end
