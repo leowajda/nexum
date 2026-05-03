@@ -80,17 +80,19 @@ module SiteKit
 
       def problem_code_collection(problem)
         implementations = problem.fetch('implementations')
+        browser_config = app_config.eureka.fetch('browser')
+        code_config = app_config.code_collection
 
         SiteKit::Templates::CodeCollections::Model.build(
           entries: implementations,
           default_entry_id: implementations.first&.fetch('entry_id'),
           options: SiteKit::Templates::CodeCollections::Options.build(
-            toolbar_aria: app_config.eureka.browser.toolbar_label,
-            variant_catalog: app_config.code_collection.implementation_modes,
-            variant_group_label: app_config.eureka.browser.variant_group_label,
-            variant_group_visibility: app_config.eureka.browser.variant_group_visibility,
-            variant_presentation: app_config.eureka.browser.variant_presentation,
-            variant_icon_map: app_config.code_collection.variant_icons,
+            toolbar_aria: browser_config.fetch('toolbar_label'),
+            variant_catalog: code_config.fetch('implementation_modes'),
+            variant_group_label: browser_config.fetch('variant_group_label'),
+            variant_group_visibility: browser_config.fetch('variant_group_visibility'),
+            variant_presentation: browser_config.fetch('variant_presentation'),
+            variant_icon_map: code_config.fetch('variant_icons'),
             sync_hash: true,
             problem_source_url: problem.fetch('problem_source_url')
           )

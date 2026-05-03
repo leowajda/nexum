@@ -54,7 +54,7 @@ module SiteKit
       end
 
       def validate_supported_keys!(problem_slug, raw_implementation, index)
-        unknown_keys = raw_implementation.keys - app_config.eureka.implementation_keys
+        unknown_keys = raw_implementation.keys - app_config.eureka.fetch('implementation_keys')
         return if unknown_keys.empty?
 
         message = "Problem '#{problem_slug}' implementation #{index} references unsupported keys: "

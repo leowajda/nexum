@@ -53,9 +53,9 @@ module SiteKit
             entries: entries,
             default_entry_id: entries.first && entries.first['entry_id'],
             options: SiteKit::Templates::CodeCollections::Options.build(
-              toolbar_aria: code_collection_config.default_toolbar_label,
-              variant_group_label: code_collection_config.default_variant_label,
-              variant_icon_map: code_collection_config.variant_icons
+              toolbar_aria: code_collection_config.fetch('default_toolbar_label'),
+              variant_group_label: code_collection_config.fetch('default_variant_label'),
+              variant_icon_map: code_collection_config.fetch('variant_icons')
             )
           )
         end
