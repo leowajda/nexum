@@ -2,29 +2,6 @@
 
 module SiteKit
   module Catalogs
-    AppEurekaBrowserConfig = Data.define(
-      :toolbar_label,
-      :variant_group_label,
-      :variant_group_visibility,
-      :variant_presentation
-    )
-    AppEurekaConfig = Data.define(
-      :catalog_version,
-      :metadata_keys,
-      :implementation_keys,
-      :browser
-    )
-    AppSourceNotesConfig = Data.define(
-      :catalog_version,
-      :ignored_directories,
-      :text_file_metadata
-    )
-    AppCodeCollectionConfig = Data.define(
-      :default_variant_label,
-      :default_toolbar_label,
-      :variant_icons,
-      :implementation_modes
-    )
     AppConfig = Data.define(:eureka, :source_notes, :code_collection)
 
     class AppConfigRepository
@@ -35,52 +12,46 @@ module SiteKit
       end
 
       def load
-        config = SiteKit::Catalogs::AppConfig.new(
-          eureka: eureka_config,
-          source_notes: source_notes_config,
-          code_collection: code_collection_config
+        eureka = section('eureka')
+        source_notes = section('source_notes')
+        code_collection = section('code_collection')
+        validate_eureka!(eureka)
+        validate_source_notes!(source_notes)
+        validate_code_collection!(code_collection)
+
+        SiteKit::Catalogs::AppConfig.new(
+          eureka: eureka,
+          source_notes: source_notes,
+          code_collection: code_collection
         )
-        validate_text_file_metadata!(config.source_notes.text_file_metadata)
-        config
       end
 
       private
 
       attr_reader :data_record
 
-      def eureka_config
-        record = section('eureka')
+      def validate_eureka!(record)
         browser = SiteKit::Core::Helpers.ensure_hash(record.fetch('browser'), 'site data.site.app.eureka.browser')
-        SiteKit::Catalogs::AppEurekaConfig.new(
-          catalog_version: record.fetch('catalog_version'),
-          metadata_keys: record.fetch('metadata_keys'),
-          implementation_keys: record.fetch('implementation_keys'),
-          browser: SiteKit::Catalogs::AppEurekaBrowserConfig.new(
-            toolbar_label: browser.fetch('toolbar_label'),
-            variant_group_label: browser.fetch('variant_group_label'),
-            variant_group_visibility: browser.fetch('variant_group_visibility'),
-            variant_presentation: browser.fetch('variant_presentation')
-          )
-        )
+        record.fetch('catalog_version')
+        record.fetch('metadata_keys')
+        record.fetch('implementation_keys')
+        browser.fetch('toolbar_label')
+        browser.fetch('variant_group_label')
+        browser.fetch('variant_group_visibility')
+        browser.fetch('variant_presentation')
       end
 
-      def source_notes_config
-        record = section('source_notes')
-        SiteKit::Catalogs::AppSourceNotesConfig.new(
-          catalog_version: record.fetch('catalog_version'),
-          ignored_directories: record.fetch('ignored_directories'),
-          text_file_metadata: text_file_metadata(record)
-        )
+      def validate_source_notes!(record)
+        record.fetch('catalog_version')
+        record.fetch('ignored_directories')
+        validate_text_file_metadata!(text_file_metadata(record))
       end
 
-      def code_collection_config
-        record = section('code_collection')
-        SiteKit::Catalogs::AppCodeCollectionConfig.new(
-          default_variant_label: record.fetch('default_variant_label'),
-          default_toolbar_label: record.fetch('default_toolbar_label'),
-          variant_icons: record.fetch('variant_icons'),
-          implementation_modes: record.fetch('implementation_modes')
-        )
+      def validate_code_collection!(record)
+        record.fetch('default_variant_label')
+        record.fetch('default_toolbar_label')
+        record.fetch('variant_icons')
+        record.fetch('implementation_modes')
       end
 
       def section(key)

@@ -30,7 +30,7 @@ module SiteKit
       attr_reader :app_config, :route_base
 
       def validate_problem_keys(raw_problem, problem_slug)
-        unknown_keys = raw_problem.keys - (app_config.eureka.metadata_keys + ['implementations'])
+        unknown_keys = raw_problem.keys - (app_config.eureka.fetch('metadata_keys') + ['implementations'])
         return if unknown_keys.empty?
 
         raise SiteKit::CatalogError, "Problem '#{problem_slug}' references unsupported keys: #{unknown_keys.join(', ')}"

@@ -37,8 +37,9 @@ module SiteKit
             'Zibaldone catalog'
           )
           version = source['version']
-          unless version == app_config.source_notes.catalog_version
-            raise SiteKit::CatalogError, "Zibaldone catalog.version must be #{app_config.source_notes.catalog_version}"
+          expected_version = app_config.source_notes.fetch('catalog_version')
+          unless version == expected_version
+            raise SiteKit::CatalogError, "Zibaldone catalog.version must be #{expected_version}"
           end
 
           project = SiteKit::Core::Helpers.ensure_hash(source.fetch('project'), 'Zibaldone catalog.project')

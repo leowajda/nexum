@@ -78,7 +78,7 @@ module SiteKit
             )
           end
         end
-        validate_unique_document_routes!(module_definition, documents)
+        validate_unique_document_paths!(module_definition, documents)
         documents
       end
 
@@ -90,7 +90,7 @@ module SiteKit
             next [] if ignored_directory?(entry.basename.to_s)
 
             walk_text_files(entry, traversal_root)
-          elsif app_config.source_notes.text_file_metadata.key?(entry.extname.downcase)
+          elsif app_config.source_notes.fetch('text_file_metadata').key?(entry.extname.downcase)
             [entry]
           else
             []
@@ -99,7 +99,7 @@ module SiteKit
       end
 
       def ignored_directory?(name)
-        name.start_with?('.') || app_config.source_notes.ignored_directories.include?(name)
+        name.start_with?('.') || app_config.source_notes.fetch('ignored_directories').include?(name)
       end
 
       def build_roots(module_definition, documents)
@@ -109,7 +109,7 @@ module SiteKit
                     .select { |document| document.fetch('tree_path').start_with?(prefix) }
                     .map do |document|
             { relative_path: document.fetch('tree_path').delete_prefix(prefix),
-              url: document.fetch('url') }
+              url: document.fetch('source_url') }
           end
 
           {
@@ -120,10 +120,10 @@ module SiteKit
         end
       end
 
-      def validate_unique_document_routes!(module_definition, documents)
+      def validate_unique_document_paths!(module_definition, documents)
         SiteKit::Core::Helpers.ensure_unique!(
-          documents.map { |document| document.fetch('route_url') },
-          "Module '#{module_definition.slug}' document routes must be unique"
+          documents.map { |document| document.fetch('tree_path') },
+          "Module '#{module_definition.slug}' document paths must be unique"
         )
       end
 

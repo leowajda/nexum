@@ -88,7 +88,7 @@ module SiteKit
 
       def normalized_url(url)
         url = url.to_s
-        return url if url.start_with?('/')
+        return url if url.start_with?('/', 'https://', 'http://')
 
         "/#{url}"
       end

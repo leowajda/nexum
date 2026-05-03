@@ -8,9 +8,9 @@ class SiteKitBuildContextTest < SiteKitTestCase
     source_notes_context = build_context.source_notes_context
     template_library = build_context.template_library_context
 
-    assert_equal 2, build_context.app_config.eureka.catalog_version
-    assert_equal 1, build_context.app_config.source_notes.catalog_version
-    assert_equal 'iterative', build_context.app_config.code_collection.variant_icons.fetch('iterative')
+    assert_equal 2, build_context.app_config.eureka.fetch('catalog_version')
+    assert_equal 1, build_context.app_config.source_notes.fetch('catalog_version')
+    assert_equal 'iterative', build_context.app_config.code_collection.fetch('variant_icons').fetch('iterative')
     assert_equal '/eureka/problems/', build_context.site_projects.find { |project| project.fetch('slug') == 'eureka' }.fetch('home_url')
     assert build_context.site_projects.find { |project| project.fetch('slug') == 'zibaldone' }.fetch('home_url').start_with?('/zibaldone/')
     assert eureka_context.browsers.fetch('eureka')

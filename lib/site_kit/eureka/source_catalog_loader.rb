@@ -49,8 +49,9 @@ module SiteKit
             SiteKit::Core::Helpers.parse_yaml(raw, 'Unable to decode Eureka problem table'), 'Eureka source'
           )
           version = source['version']
-          unless version == app_config.eureka.catalog_version
-            raise SiteKit::CatalogError, "Eureka source.version must be #{app_config.eureka.catalog_version}"
+          expected_version = app_config.eureka.fetch('catalog_version')
+          unless version == expected_version
+            raise SiteKit::CatalogError, "Eureka source.version must be #{expected_version}"
           end
 
           source
